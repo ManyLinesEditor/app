@@ -1,0 +1,25 @@
+name: CI
+ 
+on:
+  pull_request:
+    branches:
+      - main
+ 
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+
+    - name: Install dependencies
+      working-directory: manylines_editor
+      run: flutter pub get
+
+    - name: Run tests
+      working-directory: manylines_editor
+      run: flutter test
