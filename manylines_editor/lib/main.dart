@@ -270,110 +270,127 @@ class ProjectsScreen extends StatelessWidget {
     return Scaffold(
       body: Column(
         children: [
+
           // Header с Logo и Manyllines
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey[400]!),
-                    color: Colors.white,
-                  ),
-                  child: const Text(
-                    'Logo',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+          Consumer<AppState>(
+            builder: (context, state, _) {
+
+              final headerBg = state.isDarkMode ? Colors.grey[850] : Colors.white;
+              final logoBg = state.isDarkMode ? Colors.grey[800] : Colors.white;
+              final borderColor = state.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
+              final logoBorderColor = state.isDarkMode ? Colors.grey[600]! : Colors.grey[400]!;
+              final textColor = state.isDarkMode ? Colors.white : Colors.black87;
+              final logoTextColor = state.isDarkMode ? Colors.white : Colors.black;
+              
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: borderColor)),
+                  color: headerBg,
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Manyllines',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: logoBorderColor),
+                        color: logoBg,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'Logo',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: logoTextColor,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Manyllines',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
 
-          // ✅ Список проектов с перетаскиванием (управляется Switchable)
           // Список проектов с перетаскиванием (управляется Switchable)
-          // ✅ Список проектов с перетаскиванием (управляется Switchable)
-Consumer<AppState>(
-  builder: (context, state, _) {
-    final bgColor = state.isDarkMode ? Colors.green[900] : Colors.green[50];
-    final borderColor = state.isDarkMode 
-        ? const Color.fromARGB(255, 0, 47, 22) 
-        : Colors.green.shade200;
-    final textColor = state.isDarkMode ? Colors.white : Colors.black87;
-    
-    if (state.switchableValue) {
-      // ✅ Режим с перетаскиванием (ReorderableListView)
-      return ReorderableListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: state.projects.length,
-        onReorder: state.reorderProjects,
-        itemBuilder: (context, index) {
-          final project = state.projects[index];
-          return Container(
-            key: ValueKey(project.id),
-            decoration: BoxDecoration(
-              color: bgColor,
-              border: Border(
-                bottom: BorderSide(color: borderColor),
-              ),
-            ),
-            child: ListTile(
-              title: Text(project.name, style: TextStyle(color: textColor)),
-              trailing: Icon(Icons.drag_handle, 
-                  color: state.isDarkMode ? Colors.white54 : Colors.grey),
-              onTap: () => state.selectProject(project),
-            ),
-          );
-        },
-      );
-    } else {
-      // ✅ Режим БЕЗ перетаскивания (обычный список) — ПРОЕКТЫ ОТОБРАЖАЮТСЯ!
-      return Container(
-        decoration: BoxDecoration(
-          color: bgColor,
-          border: Border(
-            bottom: BorderSide(color: borderColor),
+          Consumer<AppState>(
+            builder: (context, state, _) {
+              final bgColor = state.isDarkMode ? Colors.green[900] : Colors.green[50];
+              final borderColor = state.isDarkMode 
+                  ? const Color.fromARGB(255, 0, 47, 22) 
+                  : Colors.green.shade200;
+              final textColor = state.isDarkMode ? Colors.white : Colors.black87;
+              
+              if (state.switchableValue) {
+                //Режим с перетаскиванием (ReorderableListView)
+                return ReorderableListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: state.projects.length,
+                  onReorder: state.reorderProjects,
+                  itemBuilder: (context, index) {
+                    final project = state.projects[index];
+                    return Container(
+                      key: ValueKey(project.id),
+                      decoration: BoxDecoration(
+                        color: bgColor,
+                        border: Border(
+                          bottom: BorderSide(color: borderColor),
+                        ),
+                      ),
+                      child: ListTile(
+                        title: Text(project.name, style: TextStyle(color: textColor)),
+                        trailing: Icon(Icons.drag_handle, 
+                            color: state.isDarkMode ? Colors.white54 : Colors.grey),
+                        onTap: () => state.selectProject(project),
+                      ),
+                    );
+                  },
+                );
+              } else {
+                // ✅ Режим БЕЗ перетаскивания (обычный список) — ПРОЕКТЫ ОТОБРАЖАЮТСЯ!
+                return Container(
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    border: Border(
+                      bottom: BorderSide(color: borderColor),
+                    ),
+                  ),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: state.projects.length,
+                    itemBuilder: (context, index) {
+                      final project = state.projects[index];  // ← Получаем проект
+                      return Container(  // ← Возвращаем виджет!
+                        key: ValueKey(project.id),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(color: borderColor),
+                          ),
+                        ),
+                        child: ListTile(
+                          title: Text(project.name, style: TextStyle(color: textColor)),
+                          // ❌ Без иконки drag_handle
+                          onTap: () => state.selectProject(project),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              }
+            },
           ),
-        ),
-        child: ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: state.projects.length,
-          itemBuilder: (context, index) {
-            final project = state.projects[index];  // ← Получаем проект
-            return Container(  // ← Возвращаем виджет!
-              key: ValueKey(project.id),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: borderColor),
-                ),
-              ),
-              child: ListTile(
-                title: Text(project.name, style: TextStyle(color: textColor)),
-                // ❌ Без иконки drag_handle
-                onTap: () => state.selectProject(project),
-              ),
-            );
-          },
-        ),
-      );
-    }
-  },
-),
 
           // ✅ Настройки с перетаскиванием (управляется Switchable)
           // Настройки с перетаскиванием (управляется Switchable)
@@ -430,6 +447,8 @@ Consumer<AppState>(
                             ],
                           ),
                         ),
+                        if (setting['id'] == 'setting1' && isExpanded)
+                          _buildDescriptionSection1(state.isDarkMode),
                         if (setting['id'] == 'setting2' && isExpanded)
                           _buildDescriptionSection2(state.isDarkMode),
                         if (setting['id'] == 'setting3' && isExpanded)
@@ -474,6 +493,8 @@ Consumer<AppState>(
                             ],
                           ),
                         ),
+                        if (setting['id'] == 'setting1' && isExpanded)
+                          _buildDescriptionSection1(state.isDarkMode),
                         if (setting['id'] == 'setting2' && isExpanded)
                           _buildDescriptionSection2(state.isDarkMode),
                         if (setting['id'] == 'setting3' && isExpanded)
@@ -739,6 +760,83 @@ Widget _buildDescriptionSection3(bool isDarkMode) {
             ),
           ],
         ),
+      ],
+    ),
+  );
+}
+
+Widget _buildDescriptionSection1(bool isDarkMode) {
+  return Container(
+    color: isDarkMode ? Colors.grey[850] : Colors.grey[50],
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Description',
+          style: TextStyle(
+            fontSize: 14, 
+            color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Кнопки A, B, C
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(
+                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
+                ),
+                child: Text('A'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(
+                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
+                ),
+                child: Text('B'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(
+                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
+                ),
+                child: Text('C'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
       ],
     ),
   );
