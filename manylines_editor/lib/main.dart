@@ -10,7 +10,22 @@ class Project {
   final String name;
   final List<AppDocument> documents;
 
-  Project({required this.id, required this.name, required this.documents});
+  Project({
+    required this.id,
+    required this.name,
+    required this.documents,
+  });
+
+  // ✅ Метод для получения максимального количества просмотров в проекте
+  int get maxViewCount {
+    if (documents.isEmpty) return 0;
+    return documents.map((doc) => doc.viewCount).reduce((a, b) => a > b ? a : b);
+  }
+
+  // ✅ Метод для проверки, является ли документ самым популярным
+  bool isDocumentMostUsed(AppDocument doc) {
+    return doc.viewCount >= maxViewCount && maxViewCount > 0;
+  }
 }
 
 class AppDocument {
@@ -25,15 +40,6 @@ class AppDocument {
     this.viewCount = 0,
     required this.content,
   });
-
-  bool get isMostUsed => viewCount > 0;
-
-  static AppDocument? getMostUsed(List<AppDocument> docs) {
-    if (docs.isEmpty) return null;
-    final sorted = List<AppDocument>.from(docs)
-      ..sort((a, b) => b.viewCount.compareTo(a.viewCount));
-    return sorted.first;
-  }
 }
 
 // ==================== STATE ====================
@@ -80,7 +86,6 @@ class AppState extends ChangeNotifier {
   bool _switchableValue = true;
   Project? _selectedProject;
   AppDocument? _selectedDocument;
-  final Map<String, quill.QuillController> _editors = {};
   bool _isDarkMode = false;
 
   // ==================== GETTERS ====================
@@ -103,22 +108,18 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void saveDocumentContent(AppDocument doc, Delta content) {
-    doc.content = content;
-    notifyListeners();
-  }
-
+  // ✅ Создаёт НОВЫЙ контроллер для каждого документа
   quill.QuillController getOrCreateController(AppDocument doc) {
-    if (!_editors.containsKey(doc.id)) {
-      _editors[doc.id] = quill.QuillController(
-        document: quill.Document.fromJson(doc.content.toJson()),
-        selection: const TextSelection.collapsed(offset: 0),
-      );
-      _editors[doc.id]!.changes.listen((_) {
-        saveDocumentContent(doc, _editors[doc.id]!.document.toDelta());
-      });
-    }
-    return _editors[doc.id]!;
+    final controller = quill.QuillController(
+      document: quill.Document.fromJson(doc.content.toJson()),
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+    
+    controller.changes.listen((change) {
+      doc.content = controller.document.toDelta();
+    });
+    
+    return controller;
   }
 
   void addProject() {
@@ -138,7 +139,6 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Метод для добавления документа в текущий проект
   void addDocumentToCurrentProject() {
     if (_selectedProject == null) return;
     
@@ -150,13 +150,15 @@ class AppState extends ChangeNotifier {
     );
     
     _selectedProject!.documents.add(newDoc);
-    _selectedDocument = newDoc; // Сразу открываем новый документ
+    _selectedDocument = newDoc;
     notifyListeners();
   }
 
   void selectProject(Project project) {
     _selectedProject = project;
-    final mostUsed = AppDocument.getMostUsed(project.documents);
+    final mostUsed = project.documents.isNotEmpty 
+        ? project.documents.reduce((a, b) => a.viewCount > b.viewCount ? a : b)
+        : null;
     _selectedDocument = mostUsed ?? project.documents.first;
     if (_selectedDocument != null) {
       incrementViewCount(_selectedDocument!);
@@ -217,9 +219,6 @@ class AppState extends ChangeNotifier {
 
   @override
   void dispose() {
-    for (var controller in _editors.values) {
-      controller.dispose();
-    }
     super.dispose();
   }
 }
@@ -648,62 +647,89 @@ class ProjectWorkspace extends StatelessWidget {
               : _MobileEditorView(document: state.selectedDocument!);
         }
 
-        // ✅ Цвета для тёмной темы в левой панели
         final leftPanelBg = state.isDarkMode ? Colors.grey[900] : Colors.white;
         final headerBg = state.isDarkMode ? Colors.green[900] : Colors.green[50];
         final textColor = state.isDarkMode ? Colors.white : Colors.black87;
+        final borderColor = state.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
 
-        return Row(
-          children: [
-            // Левая панель - список документов
-            Container(
-              width: 300,
-              decoration: BoxDecoration(
-                border: Border(right: BorderSide(color: state.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!)),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    color: headerBg,
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back),
-                          onPressed: () => state.clearSelectedProject(),
-                          tooltip: 'Back to projects',
-                        ),
-                        Expanded(
-                          child: Text(
-                            state.selectedProject!.name,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: textColor),
+        return Scaffold(
+          body: Row(
+            children: [
+              Container(
+                width: 300,
+                decoration: BoxDecoration(
+                  border: Border(right: BorderSide(color: borderColor)),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      color: headerBg,
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back),
+                            onPressed: () => state.clearSelectedProject(),
+                            tooltip: 'Back to projects',
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // ✅ Material wrapper для ListTile
-                  Expanded(
-                    child: Material(
-                      color: leftPanelBg,
-                      child: _DocumentsList(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Правая панель - редактор
-            Expanded(
-              child: state.selectedDocument != null
-                  ? QuillEditorView(document: state.selectedDocument!)
-                  : Center(
-                      child: Text(
-                        'Выберите документ',
-                        style: TextStyle(color: state.isDarkMode ? Colors.white70 : Colors.black54),
+                          Expanded(
+                            child: Text(
+                              state.selectedProject!.name,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: textColor),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-            ),
-          ],
+                    Expanded(
+                      child: Material(
+                        color: leftPanelBg,
+                        child: Column(
+                          children: [
+                            Expanded(child: _DocumentsList()),
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                border: Border(top: BorderSide(color: borderColor)),
+                              ),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () => state.addDocumentToCurrentProject(),
+                                  icon: const Icon(Icons.add, size: 18),
+                                  label: const Text('Новый документ'),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    foregroundColor: state.isDarkMode ? Colors.white : Colors.green[700],
+                                    side: BorderSide(color: state.isDarkMode ? Colors.green[400]! : Colors.green[700]!),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: state.selectedDocument != null
+                    ? QuillEditorView(document: state.selectedDocument!)
+                    : Center(
+                        child: Text(
+                          'Выберите документ или создайте новый',
+                          style: TextStyle(color: state.isDarkMode ? Colors.white70 : Colors.black54),
+                        ),
+                      ),
+              ),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => state.addDocumentToCurrentProject(),
+            tooltip: 'Создать документ',
+            child: const Icon(Icons.add),
+          ),
         );
       },
     );
@@ -717,8 +743,8 @@ class _DocumentsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    // ✅ Сортируем документы по viewCount (самые популярные сверху)
-    final docs = List<AppDocument>.from(state.selectedProject!.documents)
+    final project = state.selectedProject!;
+    final docs = List<AppDocument>.from(project.documents)
       ..sort((a, b) => b.viewCount.compareTo(a.viewCount));
 
     return ListView.builder(
@@ -726,11 +752,15 @@ class _DocumentsList extends StatelessWidget {
       itemBuilder: (context, index) {
         final doc = docs[index];
         final isSelected = state.selectedDocument?.id == doc.id;
+        
+        // ✅ Вычисляем isMostUsed через проект
+        final isMostUsed = project.isDocumentMostUsed(doc);
+
         return ListTile(
           selected: isSelected,
           selectedTileColor: Theme.of(context).colorScheme.secondaryContainer,
           leading: Icon(
-            doc.isMostUsed ? Icons.star : Icons.insert_drive_file,
+            isMostUsed ? Icons.star : Icons.insert_drive_file,
             color: isSelected
                 ? Theme.of(context).colorScheme.onSecondaryContainer
                 : Colors.grey[600],
@@ -753,27 +783,45 @@ class QuillEditorView extends StatefulWidget {
 }
 
 class _QuillEditorViewState extends State<QuillEditorView> {
-  late quill.QuillController _controller;
+  quill.QuillController? _controller;
 
   @override
   void initState() {
     super.initState();
+    _initializeController();
+  }
+
+  @override
+  void didUpdateWidget(QuillEditorView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // ✅ Если документ изменился - создаём НОВЫЙ контроллер
+    if (oldWidget.document.id != widget.document.id) {
+      _controller?.dispose();
+      _initializeController();
+    }
+  }
+
+  void _initializeController() {
     final state = context.read<AppState>();
     _controller = state.getOrCreateController(widget.document);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_controller == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
     return Column(
       children: [
         quill.QuillSimpleToolbar(
-          controller: _controller,
+          controller: _controller!,
           config: const quill.QuillSimpleToolbarConfig(
             showBoldButton: true,
             showItalicButton: true,
@@ -791,7 +839,7 @@ class _QuillEditorViewState extends State<QuillEditorView> {
         ),
         Expanded(
           child: quill.QuillEditor(
-            controller: _controller,
+            controller: _controller!,
             config: quill.QuillEditorConfig(
               placeholder: 'Начните печатать...',
               padding: const EdgeInsets.all(16),
