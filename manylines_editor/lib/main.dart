@@ -25,7 +25,6 @@ class AppDocument {
     required this.content,
   });
 
-  // Вычисляемое свойство
   bool get isMostUsed => viewCount > 0;
 
   static AppDocument? getMostUsed(List<AppDocument> docs) {
@@ -36,7 +35,6 @@ class AppDocument {
   }
 }
 
-// ==================== STATE ====================
 // ==================== STATE ====================
 class AppState extends ChangeNotifier {
   final List<Project> _projects = [
@@ -72,51 +70,42 @@ class AppState extends ChangeNotifier {
     ),
   ];
 
-  // ✅ Настройки (список для перетаскивания)
   List<Map<String, dynamic>> _settings = [
     {'id': 'setting1', 'name': 'Setting 1', 'expanded': true, 'enabled': false},
     {'id': 'setting2', 'name': 'Setting 2', 'expanded': false, 'enabled': false},
     {'id': 'setting3', 'name': 'Setting 3', 'expanded': true, 'enabled': false},
   ];
 
-  // ✅ Переключатель Switchable
   bool _switchableValue = true;
-
   Project? _selectedProject;
   AppDocument? _selectedDocument;
-
-  // Хранилище контроллеров для сохранения изменений
   final Map<String, quill.QuillController> _editors = {};
 
   // ==================== GETTERS ====================
   List<Project> get projects => _projects;
-  List<Map<String, dynamic>> get settings => _settings;  // ✅ Добавлен геттер
-  bool get switchableValue => _switchableValue;          // ✅ Добавлен геттер
+  List<Map<String, dynamic>> get settings => _settings;
+  bool get switchableValue => _switchableValue;
   Project? get selectedProject => _selectedProject;
   AppDocument? get selectedDocument => _selectedDocument;
 
   // ==================== METHODS ====================
   
-  // Увеличить счётчик просмотров
   void incrementViewCount(AppDocument doc) {
     doc.viewCount++;
     notifyListeners();
   }
 
-  // Сохранить изменения документа
   void saveDocumentContent(AppDocument doc, Delta content) {
     doc.content = content;
     notifyListeners();
   }
 
-  // Получить или создать контроллер для документа
   quill.QuillController getOrCreateController(AppDocument doc) {
     if (!_editors.containsKey(doc.id)) {
       _editors[doc.id] = quill.QuillController(
         document: quill.Document.fromJson(doc.content.toJson()),
         selection: const TextSelection.collapsed(offset: 0),
       );
-
       _editors[doc.id]!.changes.listen((_) {
         saveDocumentContent(doc, _editors[doc.id]!.document.toDelta());
       });
@@ -163,13 +152,11 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Метод для переключения Switchable
   void setSwitchableValue(bool value) {
     _switchableValue = value;
     notifyListeners();
   }
 
-  // ✅ Метод для перетаскивания настроек
   void reorderSettings(int oldIndex, int newIndex) {
     if (newIndex > oldIndex) {
       newIndex -= 1;
@@ -179,7 +166,16 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Метод для разворачивания/сворачивания настройки
+  // ✅ Добавлен метод для перетаскивания проектов
+  void reorderProjects(int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+    final item = _projects.removeAt(oldIndex);
+    _projects.insert(newIndex, item);
+    notifyListeners();
+  }
+
   void toggleSettingExpansion(String id) {
     for (var setting in _settings) {
       if (setting['id'] == id) {
@@ -190,7 +186,6 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // ✅ Метод для включения/выключения настройки
   void toggleSettingEnabled(String id, bool value) {
     for (var setting in _settings) {
       if (setting['id'] == id) {
@@ -244,7 +239,7 @@ class AppShell extends StatelessWidget {
   }
 }
 
-// ==================== ЭКРАН ПРОЕКТОВ (как на скрине) ====================
+// ==================== ЭКРАН ПРОЕКТОВ ====================
 class ProjectsScreen extends StatelessWidget {
   const ProjectsScreen({super.key});
 
@@ -286,137 +281,125 @@ class ProjectsScreen extends StatelessWidget {
             ),
           ),
 
-          // Список проектов (зелёный фон)
+          // ✅ Список проектов с перетаскиванием (управляется Switchable)
           Container(
             color: Colors.green[50],
             child: Consumer<AppState>(
               builder: (context, state, _) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: state.projects.map((project) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: Colors.green[200]!),
+                if (state.switchableValue) {
+                  return ReorderableListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: state.projects.length,
+                    onReorder: state.reorderProjects,
+                    itemBuilder: (context, index) {
+                      final project = state.projects[index];
+                      return Container(
+                        key: ValueKey(project.id),  // ✅ Обязательно для ReorderableListView
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(color: Colors.green[200]!),
+                          ),
                         ),
-                      ),
-                      child: CheckboxListTile(
-                        value: false,
-                        onChanged: (_) => state.selectProject(project),
-                        title: Text(project.name),
-                        controlAffinity: ListTileControlAffinity.trailing,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                      ),
-                    );
-                  }).toList(),
-                );
+                        child: ListTile(
+                          title: Text(project.name),
+                          trailing: state.switchableValue
+                              ? const Icon(Icons.drag_handle, color: Colors.grey)
+                              : null,
+                          onTap: () => state.selectProject(project),
+                        ),
+                      );
+                    },
+                  );
+                } else {
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: state.projects.length,
+                    itemBuilder: (context, index) {
+                      final project = state.projects[index];
+                      return Container(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(color: Colors.green[200]!),
+                          ),
+                        ),
+                        child: ListTile(
+                          title: Text(project.name),
+                          onTap: () => state.selectProject(project),
+                        ),
+                      );
+                    },
+                  );
+                }
               },
             ),
           ),
 
-          // Настройки (голубой фон)
-         // Настройки с возможностью перетаскивания (голубой фон)
-Container(
-  color: Colors.blue[50],
-  height: 200,
-  child: Consumer<AppState>(
-    builder: (context, state, _) {
-      // Если Switchable = true → показываем ReorderableListView
-      // Если Switchable = false → показываем обычный Column
-      if (state.switchableValue) {
-        return ReorderableListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: state.settings.length,
-          onReorder: state.reorderSettings,
-          itemBuilder: (context, index) {
-            final setting = state.settings[index];
-            return _buildSettingRow(
-              setting['name'],
-              setting['expanded'],
-              setting['enabled'],
-              setting['id'],
-              state,
-              isDraggable: true,  // ← Разрешаем перетаскивание
-            );
-          },
-        );
-      } else {
-        // Обычный список без перетаскивания
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: state.settings.length,
-          itemBuilder: (context, index) {
-            final setting = state.settings[index];
-            return _buildSettingRow(
-              setting['name'],
-              setting['expanded'],
-              setting['enabled'],
-              setting['id'],
-              state,
-              isDraggable: false,  // ← Запрещаем перетаскивание
-            );
-          },
-        );
-      }
-    },
-  ),
-),
-
-          // Description с кнопками A, B, C
+          // ✅ Настройки с перетаскиванием (управляется Switchable)
           Container(
-            padding: const EdgeInsets.all(16),
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Description',
-              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(child: _buildButton('A')),
-                const SizedBox(width: 8),
-                Expanded(child: _buildButton('B')),
-                const SizedBox(width: 8),
-                Expanded(child: _buildButton('C')),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Switchable
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Consumer<AppState>(  // ← Оберните в Consumer
+            color: Colors.blue[50],
+            child: Consumer<AppState>(
               builder: (context, state, _) {
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Switchable'),
-                    Switch(
-                      value: state.switchableValue,  // ← Используйте состояние
-                      onChanged: (value) {
-                        state.setSwitchableValue(value);  // ← Сохраняйте изменение
-                      },
-                    ),
-                  ],
-                );
+                final settings = state.settings;
+                
+                if (state.switchableValue) {
+                  return ReorderableListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: settings.length,
+                    onReorder: state.reorderSettings,
+                    itemBuilder: (context, index) {
+                      final setting = settings[index];
+                      final isExpanded = setting['expanded'] ?? false;
+                      
+                      return Column(
+                        key: ValueKey(setting['id']),
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildSettingRow(
+                            setting['name'],
+                            isExpanded,
+                            setting['enabled'] ?? false,
+                            setting['id'],
+                            state,
+                            isDraggable: true,
+                          ),
+                          if (setting['id'] == 'setting3' && isExpanded)
+                            _buildDescriptionSection(),
+                        ],
+                      );
+                    },
+                  );
+                } else {
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: settings.length,
+                    itemBuilder: (context, index) {
+                      final setting = settings[index];
+                      final isExpanded = setting['expanded'] ?? false;
+                      
+                      return Column(
+                        key: ValueKey(setting['id']),
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildSettingRow(
+                            setting['name'],
+                            isExpanded,
+                            setting['enabled'] ?? false,
+                            setting['id'],
+                            state,
+                            isDraggable: false,
+                          ),
+                          if (setting['id'] == 'setting3' && isExpanded)
+                            _buildDescriptionSection(),
+                        ],
+                      );
+                    },
+                  );
+                }
               },
-            ),
-          ),
-
-          // Listable
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Listable'),
-                const Icon(Icons.arrow_drop_down),
-              ],
             ),
           ),
 
@@ -442,50 +425,140 @@ Container(
     );
   }
 
-  Widget _buildSettingRow(
-  String title,
-  bool expanded,
-  bool enabled,
-  String id,
-  AppState state, {
-  bool isDraggable = false,  // ← Новый параметр
-}) {
-  return Container(
-    key: ValueKey(id),  // Обязательно для ReorderableListView!
-    decoration: BoxDecoration(
-      border: Border(bottom: BorderSide(color: Colors.blue[200]!)),
-      color: Colors.white,
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(title),
-        Row(
-          children: [
-            IconButton(
-              icon: Icon(expanded ? Icons.arrow_drop_down : Icons.arrow_drop_up),
-              onPressed: () => state.toggleSettingExpansion(id),
-            ),
-            const SizedBox(width: 8),
-            Checkbox(
-              value: enabled,
-              onChanged: (value) {
-                state.toggleSettingEnabled(id, value ?? false);
-              },
-            ),
-            if (isDraggable)
-              IconButton(
-                icon: const Icon(Icons.drag_handle, color: Colors.grey),
-                onPressed: () {},
-                tooltip: 'Перетащить',
+  // ✅ Метод для построения секции Description (выпадает из Setting 3)
+  Widget _buildDescriptionSection() {
+    return Container(
+      color: Colors.grey[50],
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Description',
+            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+          ),
+          const SizedBox(height: 12),
+          
+          // Кнопки A, B, C
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {},
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    side: BorderSide(color: Colors.grey[400]!),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('A'),
+                ),
               ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {},
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    side: BorderSide(color: Colors.grey[400]!),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('B'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {},
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    side: BorderSide(color: Colors.grey[400]!),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('C'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          
+          // Switchable
+          Consumer<AppState>(
+            builder: (context, state, _) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Switchable'),
+                  Switch(
+                    value: state.switchableValue,
+                    onChanged: (value) {
+                      state.setSwitchableValue(value);
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+          
+          // Listable
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Listable'),
+              IconButton(
+                icon: const Icon(Icons.arrow_drop_down),
+                onPressed: () {},
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingRow(
+    String title,
+    bool expanded,
+    bool enabled,
+    String id,
+    AppState state, {
+    bool isDraggable = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: Colors.blue[200]!)),
+        color: Colors.white,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title),
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(expanded ? Icons.arrow_drop_down : Icons.arrow_drop_up),
+                onPressed: () => state.toggleSettingExpansion(id),
+              ),
+              const SizedBox(width: 8),
+              // ✅ Чекбокс удалён
+              if (isDraggable)
+                IconButton(
+                  icon: const Icon(Icons.drag_handle, color: Colors.grey),
+                  onPressed: () {},
+                  tooltip: 'Перетащить',
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildButton(String label) {
     return OutlinedButton(
@@ -518,7 +591,6 @@ class ProjectWorkspace extends StatelessWidget {
 
         return Row(
           children: [
-            // Левая панель - список документов (30% ширины)
             Container(
               width: 300,
               decoration: BoxDecoration(
@@ -526,7 +598,6 @@ class ProjectWorkspace extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  // Header
                   Container(
                     padding: const EdgeInsets.all(16),
                     color: Colors.green[50],
@@ -546,12 +617,10 @@ class ProjectWorkspace extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Список документов
                   const Expanded(child: _DocumentsList()),
                 ],
               ),
             ),
-            // Правая панель - редактор (70% ширины)
             Expanded(
               child: state.selectedDocument != null
                   ? QuillEditorView(document: state.selectedDocument!)
@@ -618,6 +687,7 @@ class _QuillEditorViewState extends State<QuillEditorView> {
 
   @override
   void dispose() {
+    _controller.dispose();
     super.dispose();
   }
 
@@ -645,9 +715,9 @@ class _QuillEditorViewState extends State<QuillEditorView> {
         Expanded(
           child: quill.QuillEditor(
             controller: _controller,
-            config: const quill.QuillEditorConfig(
+            config: quill.QuillEditorConfig(
               placeholder: 'Начните печатать...',
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
             ),
             scrollController: ScrollController(),
             focusNode: FocusNode(),
