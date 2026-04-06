@@ -16,13 +16,11 @@ class Project {
     required this.documents,
   });
 
-  // ✅ Метод для получения максимального количества просмотров в проекте
   int get maxViewCount {
     if (documents.isEmpty) return 0;
     return documents.map((doc) => doc.viewCount).reduce((a, b) => a > b ? a : b);
   }
 
-  // ✅ Метод для проверки, является ли документ самым популярным
   bool isDocumentMostUsed(AppDocument doc) {
     return doc.viewCount >= maxViewCount && maxViewCount > 0;
   }
@@ -45,35 +43,16 @@ class AppDocument {
 // ==================== STATE ====================
 class AppState extends ChangeNotifier {
   final List<Project> _projects = [
+    // ✅ Проекты создаются ПУСТЫМИ (без документов)
     Project(
       id: 'p1',
       name: 'Project 1',
-      documents: [
-        AppDocument(
-          id: 'd1',
-          name: 'Main Document',
-          viewCount: 15,
-          content: Delta()..insert('Welcome to Project 1!\n'),
-        ),
-        AppDocument(
-          id: 'd2',
-          name: 'Specifications',
-          viewCount: 8,
-          content: Delta()..insert('Technical specifications...\n'),
-        ),
-      ],
+      documents: [], // ← Пустой список!
     ),
     Project(
       id: 'p2',
       name: 'Project 2',
-      documents: [
-        AppDocument(
-          id: 'd3',
-          name: 'Overview',
-          viewCount: 23,
-          content: Delta()..insert('Project overview...\n'),
-        ),
-      ],
+      documents: [], // ← Пустой список!
     ),
   ];
 
@@ -122,23 +101,18 @@ class AppState extends ChangeNotifier {
     return controller;
   }
 
+  // ✅ Project создаётся БЕЗ документов
   void addProject() {
     final newId = 'p${_projects.length + 1}';
     _projects.add(Project(
       id: newId,
       name: 'Project ${_projects.length + 1}',
-      documents: [
-        AppDocument(
-          id: 'd${DateTime.now().millisecondsSinceEpoch}',
-          name: 'New Document',
-          viewCount: 1,
-          content: Delta()..insert('Start typing...\n'),
-        ),
-      ],
+      documents: [], // ← Пустой список!
     ));
     notifyListeners();
   }
 
+  // ✅ Добавляет документ в текущий проект
   void addDocumentToCurrentProject() {
     if (_selectedProject == null) return;
     
@@ -150,18 +124,23 @@ class AppState extends ChangeNotifier {
     );
     
     _selectedProject!.documents.add(newDoc);
-    _selectedDocument = newDoc;
+    _selectedDocument = newDoc; // ✅ Сразу открываем новый документ
     notifyListeners();
   }
 
   void selectProject(Project project) {
     _selectedProject = project;
-    final mostUsed = project.documents.isNotEmpty 
-        ? project.documents.reduce((a, b) => a.viewCount > b.viewCount ? a : b)
-        : null;
-    _selectedDocument = mostUsed ?? project.documents.first;
-    if (_selectedDocument != null) {
-      incrementViewCount(_selectedDocument!);
+    
+    // ✅ Если есть документы - выбираем самый популярный
+    if (project.documents.isNotEmpty) {
+      final mostUsed = project.documents.reduce((a, b) => 
+        a.viewCount > b.viewCount ? a : b
+      );
+      _selectedDocument = mostUsed;
+      incrementViewCount(mostUsed);
+    } else {
+      // ✅ Если документов нет - очищаем selectedDocument
+      _selectedDocument = null;
     }
     notifyListeners();
   }
@@ -329,7 +308,7 @@ class ProjectsScreen extends StatelessWidget {
             },
           ),
 
-          // Список проектов с перетаскиванием
+          // Список проектов
           Consumer<AppState>(
             builder: (context, state, _) {
               final bgColor = state.isDarkMode ? Colors.green[900] : Colors.green[50];
@@ -354,6 +333,10 @@ class ProjectsScreen extends StatelessWidget {
                       ),
                       child: ListTile(
                         title: Text(project.name, style: TextStyle(color: textColor)),
+                        subtitle: Text(
+                          '${project.documents.length} документов',
+                          style: TextStyle(fontSize: 12, color: textColor.withOpacity(0.7)),
+                        ),
                         trailing: Icon(Icons.drag_handle, 
                             color: state.isDarkMode ? Colors.white54 : Colors.grey),
                         onTap: () => state.selectProject(project),
@@ -380,6 +363,10 @@ class ProjectsScreen extends StatelessWidget {
                         ),
                         child: ListTile(
                           title: Text(project.name, style: TextStyle(color: textColor)),
+                          subtitle: Text(
+                            '${project.documents.length} документов',
+                            style: TextStyle(fontSize: 12, color: textColor.withOpacity(0.7)),
+                          ),
                           onTap: () => state.selectProject(project),
                         ),
                       );
@@ -390,7 +377,7 @@ class ProjectsScreen extends StatelessWidget {
             },
           ),
 
-          // Настройки с перетаскиванием
+          // Настройки
           Consumer<AppState>(
             builder: (context, state, _) {
               final bgColor = state.isDarkMode ? Colors.blue[900] : Colors.blue[50];
@@ -506,7 +493,6 @@ class ProjectsScreen extends StatelessWidget {
     );
   }
 
-  // ==================== ОПИСАНИЯ ДЛЯ НАСТРОЕК ====================
   Widget _buildDescriptionSection2(bool isDarkMode) {
     return Container(
       color: isDarkMode ? Colors.grey[850] : Colors.grey[50],
@@ -631,6 +617,7 @@ class ProjectsScreen extends StatelessWidget {
 }
 
 // ==================== РАБОЧЕЕ ПРОСТРАНСТВО ====================
+// ==================== РАБОЧЕЕ ПРОСТРАНСТВО ====================
 class ProjectWorkspace extends StatelessWidget {
   const ProjectWorkspace({super.key});
 
@@ -639,99 +626,144 @@ class ProjectWorkspace extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 700;
-        final state = context.read<AppState>();
 
         if (!isWide) {
-          return state.selectedDocument == null
-              ? const _MobileDocList()
-              : _MobileEditorView(document: state.selectedDocument!);
+          // ✅ Используем watch для мобильных
+          return Consumer<AppState>(
+            builder: (context, state, _) {
+              return state.selectedDocument == null
+                  ? const _MobileDocList()
+                  : _MobileEditorView(document: state.selectedDocument!);
+            },
+          );
         }
 
-        final leftPanelBg = state.isDarkMode ? Colors.grey[900] : Colors.white;
-        final headerBg = state.isDarkMode ? Colors.green[900] : Colors.green[50];
-        final textColor = state.isDarkMode ? Colors.white : Colors.black87;
-        final borderColor = state.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
-
-        return Scaffold(
-          body: Row(
-            children: [
-              Container(
-                width: 300,
-                decoration: BoxDecoration(
-                  border: Border(right: BorderSide(color: borderColor)),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      color: headerBg,
-                      child: Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back),
-                            onPressed: () => state.clearSelectedProject(),
-                            tooltip: 'Back to projects',
-                          ),
-                          Expanded(
-                            child: Text(
-                              state.selectedProject!.name,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: textColor),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Material(
-                        color: leftPanelBg,
-                        child: Column(
-                          children: [
-                            Expanded(child: _DocumentsList()),
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                border: Border(top: BorderSide(color: borderColor)),
-                              ),
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  onPressed: () => state.addDocumentToCurrentProject(),
-                                  icon: const Icon(Icons.add, size: 18),
-                                  label: const Text('Новый документ'),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    foregroundColor: state.isDarkMode ? Colors.white : Colors.green[700],
-                                    side: BorderSide(color: state.isDarkMode ? Colors.green[400]! : Colors.green[700]!),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: state.selectedDocument != null
-                    ? QuillEditorView(document: state.selectedDocument!)
-                    : Center(
-                        child: Text(
-                          'Выберите документ или создайте новый',
-                          style: TextStyle(color: state.isDarkMode ? Colors.white70 : Colors.black54),
-                        ),
-                      ),
-              ),
-            ],
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => state.addDocumentToCurrentProject(),
-            tooltip: 'Создать документ',
-            child: const Icon(Icons.add),
-          ),
+        // ✅ Используем Selector для отслеживания selectedDocument
+        return Selector<AppState, AppDocument?>(
+          selector: (_, state) => state.selectedDocument,
+          builder: (context, selectedDocument, _) {
+            return _buildDesktopLayout(context, selectedDocument);
+          },
         );
       },
+    );
+  }
+
+  Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) {
+    final state = context.read<AppState>();
+    final leftPanelBg = state.isDarkMode ? Colors.grey[900] : Colors.white;
+    final headerBg = state.isDarkMode ? Colors.green[900] : Colors.green[50];
+    final textColor = state.isDarkMode ? Colors.white : Colors.black87;
+    final borderColor = state.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
+
+    return Scaffold(
+      body: Row(
+        children: [
+          Container(
+            width: 300,
+            decoration: BoxDecoration(
+              border: Border(right: BorderSide(color: borderColor)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  color: headerBg,
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => state.clearSelectedProject(),
+                        tooltip: 'Back to projects',
+                      ),
+                      Expanded(
+                        child: Text(
+                          state.selectedProject!.name,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: textColor),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Material(
+                    color: leftPanelBg,
+                    child: Column(
+                      children: [
+                        const Expanded(child: _DocumentsList()),
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            border: Border(top: BorderSide(color: borderColor)),
+                          ),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () => state.addDocumentToCurrentProject(),
+                              icon: const Icon(Icons.add, size: 18),
+                              label: const Text('Новый документ'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                foregroundColor: state.isDarkMode ? Colors.white : Colors.green[700],
+                                side: BorderSide(color: state.isDarkMode ? Colors.green[400]! : Colors.green[700]!),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: selectedDocument != null
+                ? QuillEditorView(document: selectedDocument)
+                : Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.description_outlined,
+                          size: 64,
+                          color: state.isDarkMode ? Colors.white30 : Colors.black26,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'В проекте нет документов',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: state.isDarkMode ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Нажмите кнопку "+ Новый документ" чтобы создать',
+                          style: TextStyle(
+                            color: state.isDarkMode ? Colors.white54 : Colors.black45,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () => state.addDocumentToCurrentProject(),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Создать первый документ'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => state.addDocumentToCurrentProject(),
+        tooltip: 'Создать документ',
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }
@@ -747,13 +779,31 @@ class _DocumentsList extends StatelessWidget {
     final docs = List<AppDocument>.from(project.documents)
       ..sort((a, b) => b.viewCount.compareTo(a.viewCount));
 
+    if (docs.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.folder_open_outlined,
+              size: 48,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Нет документов',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      );
+    }
+
     return ListView.builder(
       itemCount: docs.length,
       itemBuilder: (context, index) {
         final doc = docs[index];
         final isSelected = state.selectedDocument?.id == doc.id;
-        
-        // ✅ Вычисляем isMostUsed через проект
         final isMostUsed = project.isDocumentMostUsed(doc);
 
         return ListTile(
@@ -766,7 +816,9 @@ class _DocumentsList extends StatelessWidget {
                 : Colors.grey[600],
           ),
           title: Text(doc.name),
-          subtitle: isSelected ? null : Text('Views: ${doc.viewCount}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+          subtitle: isSelected 
+              ? null 
+              : Text('Views: ${doc.viewCount}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
           onTap: () => state.selectDocument(doc),
         );
       },
@@ -794,7 +846,6 @@ class _QuillEditorViewState extends State<QuillEditorView> {
   @override
   void didUpdateWidget(QuillEditorView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // ✅ Если документ изменился - создаём НОВЫЙ контроллер
     if (oldWidget.document.id != widget.document.id) {
       _controller?.dispose();
       _initializeController();
@@ -863,8 +914,19 @@ class _MobileDocList extends StatelessWidget {
       appBar: AppBar(
         title: Text(state.selectedProject!.name),
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => state.clearSelectedProject()),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => state.addDocumentToCurrentProject(),
+            tooltip: 'Новый документ',
+          ),
+        ],
       ),
       body: const _DocumentsList(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => state.addDocumentToCurrentProject(),
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }
