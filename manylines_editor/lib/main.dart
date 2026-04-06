@@ -606,7 +606,7 @@ class ProjectsScreen extends StatelessWidget {
         onPressed: () {},
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 12),
-          side: BorderSide(color: isDarkMode ? const Color.fromARGB(255, 54, 107, 232) : Colors.grey[400]!),
+          side: BorderSide(color: isDarkMode ? const Color.fromARGB(163, 162, 164, 170) : Colors.grey[400]!),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           foregroundColor: isDarkMode ? Colors.white : Colors.black87,
         ),
