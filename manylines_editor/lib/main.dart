@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:provider/provider.dart';
 import 'package:dart_quill_delta/dart_quill_delta.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 // ==================== МОДЕЛИ ====================
 class Project {
@@ -80,9 +81,7 @@ class AppState extends ChangeNotifier {
   Project? _selectedProject;
   AppDocument? _selectedDocument;
   final Map<String, quill.QuillController> _editors = {};
-
   bool _isDarkMode = false;
-  
 
   // ==================== GETTERS ====================
   List<Project> get projects => _projects;
@@ -90,11 +89,10 @@ class AppState extends ChangeNotifier {
   bool get switchableValue => _switchableValue;
   Project? get selectedProject => _selectedProject;
   AppDocument? get selectedDocument => _selectedDocument;
-
   bool get isDarkMode => _isDarkMode;
 
   // ==================== METHODS ====================
-
+  
   void toggleDarkMode(bool value) {
     _isDarkMode = value;
     notifyListeners();
@@ -140,6 +138,22 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ✅ Метод для добавления документа в текущий проект
+  void addDocumentToCurrentProject() {
+    if (_selectedProject == null) return;
+    
+    final newDoc = AppDocument(
+      id: 'd${DateTime.now().millisecondsSinceEpoch}',
+      name: 'Document ${_selectedProject!.documents.length + 1}',
+      viewCount: 0,
+      content: Delta()..insert('New document content...\n'),
+    );
+    
+    _selectedProject!.documents.add(newDoc);
+    _selectedDocument = newDoc; // Сразу открываем новый документ
+    notifyListeners();
+  }
+
   void selectProject(Project project) {
     _selectedProject = project;
     final mostUsed = AppDocument.getMostUsed(project.documents);
@@ -168,19 +182,14 @@ class AppState extends ChangeNotifier {
   }
 
   void reorderSettings(int oldIndex, int newIndex) {
-    if (newIndex > oldIndex) {
-      newIndex -= 1;
-    }
+    if (newIndex > oldIndex) newIndex -= 1;
     final item = _settings.removeAt(oldIndex);
     _settings.insert(newIndex, item);
     notifyListeners();
   }
 
-  // ✅ Добавлен метод для перетаскивания проектов
   void reorderProjects(int oldIndex, int newIndex) {
-    if (newIndex > oldIndex) {
-      newIndex -= 1;
-    }
+    if (newIndex > oldIndex) newIndex -= 1;
     final item = _projects.removeAt(oldIndex);
     _projects.insert(newIndex, item);
     notifyListeners();
@@ -224,6 +233,14 @@ void main() {
         builder: (context, state, _) {
           return MaterialApp(
             title: 'Manyllines',
+            localizationsDelegates: const [
+              quill.FlutterQuillLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [Locale('ru', 'RU'), Locale('en', 'US')],
+            locale: const Locale('ru', 'RU'),
             theme: state.isDarkMode 
                 ? ThemeData(
                     useMaterial3: true,
@@ -270,11 +287,9 @@ class ProjectsScreen extends StatelessWidget {
     return Scaffold(
       body: Column(
         children: [
-
           // Header с Logo и Manyllines
           Consumer<AppState>(
             builder: (context, state, _) {
-
               final headerBg = state.isDarkMode ? Colors.grey[850] : Colors.white;
               final logoBg = state.isDarkMode ? Colors.grey[800] : Colors.white;
               final borderColor = state.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
@@ -299,21 +314,14 @@ class ProjectsScreen extends StatelessWidget {
                       ),
                       child: Text(
                         'Logo',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: logoTextColor,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.bold, color: logoTextColor),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'Manyllines',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
-                        ),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: textColor),
                       ),
                     ),
                   ],
@@ -322,7 +330,7 @@ class ProjectsScreen extends StatelessWidget {
             },
           ),
 
-          // Список проектов с перетаскиванием (управляется Switchable)
+          // Список проектов с перетаскиванием
           Consumer<AppState>(
             builder: (context, state, _) {
               final bgColor = state.isDarkMode ? Colors.green[900] : Colors.green[50];
@@ -332,7 +340,6 @@ class ProjectsScreen extends StatelessWidget {
               final textColor = state.isDarkMode ? Colors.white : Colors.black87;
               
               if (state.switchableValue) {
-                //Режим с перетаскиванием (ReorderableListView)
                 return ReorderableListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -344,9 +351,7 @@ class ProjectsScreen extends StatelessWidget {
                       key: ValueKey(project.id),
                       decoration: BoxDecoration(
                         color: bgColor,
-                        border: Border(
-                          bottom: BorderSide(color: borderColor),
-                        ),
+                        border: Border(bottom: BorderSide(color: borderColor)),
                       ),
                       child: ListTile(
                         title: Text(project.name, style: TextStyle(color: textColor)),
@@ -358,30 +363,24 @@ class ProjectsScreen extends StatelessWidget {
                   },
                 );
               } else {
-                // ✅ Режим БЕЗ перетаскивания (обычный список) — ПРОЕКТЫ ОТОБРАЖАЮТСЯ!
                 return Container(
                   decoration: BoxDecoration(
                     color: bgColor,
-                    border: Border(
-                      bottom: BorderSide(color: borderColor),
-                    ),
+                    border: Border(bottom: BorderSide(color: borderColor)),
                   ),
                   child: ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: state.projects.length,
                     itemBuilder: (context, index) {
-                      final project = state.projects[index];  // ← Получаем проект
-                      return Container(  // ← Возвращаем виджет!
+                      final project = state.projects[index];
+                      return Container(
                         key: ValueKey(project.id),
                         decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(color: borderColor),
-                          ),
+                          border: Border(bottom: BorderSide(color: borderColor)),
                         ),
                         child: ListTile(
                           title: Text(project.name, style: TextStyle(color: textColor)),
-                          // ❌ Без иконки drag_handle
                           onTap: () => state.selectProject(project),
                         ),
                       );
@@ -392,15 +391,12 @@ class ProjectsScreen extends StatelessWidget {
             },
           ),
 
-          // ✅ Настройки с перетаскиванием (управляется Switchable)
-          // Настройки с перетаскиванием (управляется Switchable)
+          // Настройки с перетаскиванием
           Consumer<AppState>(
             builder: (context, state, _) {
-              // ✅ Выбираем цвет в зависимости от темы
               final bgColor = state.isDarkMode ? Colors.blue[900] : Colors.blue[50];
               final borderColor = state.isDarkMode ? Colors.blue[700] : Colors.blue[200];
               final textColor = state.isDarkMode ? Colors.white : Colors.black87;
-              
               final settings = state.settings;
               
               if (state.switchableValue) {
@@ -412,7 +408,6 @@ class ProjectsScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final setting = settings[index];
                     final isExpanded = setting['expanded'] ?? false;
-                    
                     return Column(
                       key: ValueKey(setting['id']),
                       mainAxisSize: MainAxisSize.min,
@@ -426,33 +421,23 @@ class ProjectsScreen extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                setting['name'],
-                                style: TextStyle(color: textColor),
-                              ),
+                              Text(setting['name'], style: TextStyle(color: textColor)),
                               Row(
                                 children: [
                                   IconButton(
-                                    icon: Icon(
-                                      isExpanded ? Icons.arrow_drop_down : Icons.arrow_drop_up,
-                                      color: textColor,
-                                    ),
+                                    icon: Icon(isExpanded ? Icons.arrow_drop_down : Icons.arrow_drop_up, color: textColor),
                                     onPressed: () => state.toggleSettingExpansion(setting['id']),
                                   ),
                                   if (state.switchableValue)
-                                    Icon(Icons.drag_handle, 
-                                        color: state.isDarkMode ? Colors.white54 : Colors.grey),
+                                    Icon(Icons.drag_handle, color: state.isDarkMode ? Colors.white54 : Colors.grey),
                                 ],
                               ),
                             ],
                           ),
                         ),
-                        if (setting['id'] == 'setting1' && isExpanded)
-                          _buildDescriptionSection1(state.isDarkMode),
-                        if (setting['id'] == 'setting2' && isExpanded)
-                          _buildDescriptionSection2(state.isDarkMode),
-                        if (setting['id'] == 'setting3' && isExpanded)
-                          _buildDescriptionSection3(state.isDarkMode),
+                        if (setting['id'] == 'setting1' && isExpanded) _buildDescriptionSection1(state.isDarkMode),
+                        if (setting['id'] == 'setting2' && isExpanded) _buildDescriptionSection2(state.isDarkMode),
+                        if (setting['id'] == 'setting3' && isExpanded) _buildDescriptionSection3(state.isDarkMode),
                       ],
                     );
                   },
@@ -465,7 +450,6 @@ class ProjectsScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final setting = settings[index];
                     final isExpanded = setting['expanded'] ?? false;
-                    
                     return Column(
                       key: ValueKey(setting['id']),
                       mainAxisSize: MainAxisSize.min,
@@ -479,26 +463,17 @@ class ProjectsScreen extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                setting['name'],
-                                style: TextStyle(color: textColor),
-                              ),
+                              Text(setting['name'], style: TextStyle(color: textColor)),
                               IconButton(
-                                icon: Icon(
-                                  isExpanded ? Icons.arrow_drop_down : Icons.arrow_drop_up,
-                                  color: textColor,
-                                ),
+                                icon: Icon(isExpanded ? Icons.arrow_drop_down : Icons.arrow_drop_up, color: textColor),
                                 onPressed: () => state.toggleSettingExpansion(setting['id']),
                               ),
                             ],
                           ),
                         ),
-                        if (setting['id'] == 'setting1' && isExpanded)
-                          _buildDescriptionSection1(state.isDarkMode),
-                        if (setting['id'] == 'setting2' && isExpanded)
-                          _buildDescriptionSection2(state.isDarkMode),
-                        if (setting['id'] == 'setting3' && isExpanded)
-                          _buildDescriptionSection3(state.isDarkMode),
+                        if (setting['id'] == 'setting1' && isExpanded) _buildDescriptionSection1(state.isDarkMode),
+                        if (setting['id'] == 'setting2' && isExpanded) _buildDescriptionSection2(state.isDarkMode),
+                        if (setting['id'] == 'setting3' && isExpanded) _buildDescriptionSection3(state.isDarkMode),
                       ],
                     );
                   },
@@ -507,22 +482,17 @@ class ProjectsScreen extends StatelessWidget {
             },
           ),
 
-          // Additional settings (голубой фон)
-          // Additional settings (голубой фон) — с поддержкой тёмной темы
+          // Additional settings
           Consumer<AppState>(
             builder: (context, state, _) {
               final bgColor = state.isDarkMode ? const Color.fromARGB(255, 6, 58, 137) : Colors.blue[50];
               final textColor = state.isDarkMode ? Colors.white54 : Colors.black54;
-              
               return Expanded(
                 child: Container(
                   color: bgColor,
                   padding: const EdgeInsets.all(16),
                   child: Center(
-                    child: Text(
-                      'Other Settings ...',
-                      style: TextStyle(color: textColor),
-                    ),
+                    child: Text('Other Settings ...', style: TextStyle(color: textColor)),
                   ),
                 ),
               );
@@ -537,323 +507,128 @@ class ProjectsScreen extends StatelessWidget {
     );
   }
 
-  // ✅ Метод для построения секции Description (выпадает из Setting 3)
-  // ✅ Метод для построения секции Description для Setting 2 (с переключением темы)
-Widget _buildDescriptionSection2(bool isDarkMode) {
-  return Container(
-    color: isDarkMode ? Colors.grey[850] : Colors.grey[50],
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Description',
-          style: TextStyle(
-            fontSize: 14, 
-            color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+  // ==================== ОПИСАНИЯ ДЛЯ НАСТРОЕК ====================
+  Widget _buildDescriptionSection2(bool isDarkMode) {
+    return Container(
+      color: isDarkMode ? Colors.grey[850] : Colors.grey[50],
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Description', style: TextStyle(fontSize: 14, color: isDarkMode ? Colors.grey[300] : Colors.grey[700])),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildOutlinedButton('A', isDarkMode),
+              const SizedBox(width: 8),
+              _buildOutlinedButton('B', isDarkMode),
+              const SizedBox(width: 8),
+              _buildOutlinedButton('C', isDarkMode),
+            ],
           ),
-        ),
-        const SizedBox(height: 12),
-        
-        // Кнопки A, B, C
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(
-                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
+          const SizedBox(height: 16),
+          Consumer<AppState>(
+            builder: (context, state, _) {
+              final isDark = state.isDarkMode;
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(isDark ? Icons.dark_mode : Icons.light_mode, size: 20, color: isDark ? Colors.yellow[200] : Colors.orange),
+                      const SizedBox(width: 8),
+                      Text(isDark ? 'Тёмная тема' : 'Светлая тема', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87)),
+                    ],
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
-                ),
-                child: Text('A'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(
-                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
-                ),
-                child: Text('B'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(
-                    color: isDarkMode ? const Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
-                ),
-                child: Text('C'),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        
-        // Switchable для переключения темы
-        Consumer<AppState>(
-          builder: (context, state, _) {
-            final isDark = state.isDarkMode;
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      isDark ? Icons.dark_mode : Icons.light_mode,
-                      size: 20,
-                      color: isDark ? Colors.yellow[200] : Colors.orange,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      isDark ? 'Тёмная тема' : 'Светлая тема',
-                      style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
-                    ),
-                  ],
-                ),
-                Switch(
-                  value: isDark,
-                  onChanged: (value) {
-                    state.toggleDarkMode(value);
-                  },
-                ),
-              ],
-            );
-          },
-        ),
-      ],
-    ),
-  );
-}
-
-// ✅ Метод для построения секции Description для Setting 3
-Widget _buildDescriptionSection3(bool isDarkMode) {
-  return Container(
-    color: isDarkMode ? Colors.grey[850] : Colors.grey[50],
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Description',
-          style: TextStyle(
-            fontSize: 14, 
-            color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                  Switch(value: isDark, onChanged: (value) => state.toggleDarkMode(value)),
+                ],
+              );
+            },
           ),
-        ),
-        const SizedBox(height: 12),
-        
-        // Кнопки A, B, C
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(
-                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
-                ),
-                child: Text('A'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(
-                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
-                ),
-                child: Text('B'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(
-                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
-                ),
-                child: Text('C'),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        
-        // Switchable
-        Consumer<AppState>(
-          builder: (context, state, _) {
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Switchable',
-                  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
-                ),
-                Switch(
-                  value: state.switchableValue,
-                  onChanged: (value) {
-                    state.setSwitchableValue(value);
-                  },
-                ),
-              ],
-            );
-          },
-        ),
+        ],
+      ),
+    );
+  }
 
-        
-        
-        // Listable
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Listable',
-              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
-            ),
-            IconButton(
-              icon: Icon(Icons.arrow_drop_down, 
-                  color: isDarkMode ? Colors.white : Colors.black87),
-              onPressed: () {},
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildDescriptionSection1(bool isDarkMode) {
-  return Container(
-    color: isDarkMode ? Colors.grey[850] : Colors.grey[50],
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Description',
-          style: TextStyle(
-            fontSize: 14, 
-            color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+  Widget _buildDescriptionSection3(bool isDarkMode) {
+    return Container(
+      color: isDarkMode ? Colors.grey[850] : Colors.grey[50],
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Description', style: TextStyle(fontSize: 14, color: isDarkMode ? Colors.grey[300] : Colors.grey[700])),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildOutlinedButton('A', isDarkMode),
+              const SizedBox(width: 8),
+              _buildOutlinedButton('B', isDarkMode),
+              const SizedBox(width: 8),
+              _buildOutlinedButton('C', isDarkMode),
+            ],
           ),
-        ),
-        const SizedBox(height: 12),
-        
-        // Кнопки A, B, C
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(
-                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
-                ),
-                child: Text('A'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(
-                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
-                ),
-                child: Text('B'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(
-                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
-                ),
-                child: Text('C'),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-      ],
-    ),
-  );
-}
+          const SizedBox(height: 16),
+          Consumer<AppState>(
+            builder: (context, state, _) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Switchable', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87)),
+                  Switch(value: state.switchableValue, onChanged: (value) => state.setSwitchableValue(value)),
+                ],
+              );
+            },
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Listable', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87)),
+              IconButton(icon: Icon(Icons.arrow_drop_down, color: isDarkMode ? Colors.white : Colors.black87), onPressed: () {}),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-  // Widget _buildButton(String label) {
-  //   return OutlinedButton(
-  //     onPressed: () {},
-  //     style: OutlinedButton.styleFrom(
-  //       padding: const EdgeInsets.symmetric(vertical: 12),
-  //       side: BorderSide(color: Colors.grey[400]!),
-  //     ),
-  //     child: Text(label),
-  //   );
-  // }
+  Widget _buildDescriptionSection1(bool isDarkMode) {
+    return Container(
+      color: isDarkMode ? Colors.grey[850] : Colors.grey[50],
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Description', style: TextStyle(fontSize: 14, color: isDarkMode ? Colors.grey[300] : Colors.grey[700])),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildOutlinedButton('A', isDarkMode),
+              const SizedBox(width: 8),
+              _buildOutlinedButton('B', isDarkMode),
+              const SizedBox(width: 8),
+              _buildOutlinedButton('C', isDarkMode),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-  
+  Widget _buildOutlinedButton(String label, bool isDarkMode) {
+    return Expanded(
+      child: OutlinedButton(
+        onPressed: () {},
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          side: BorderSide(color: isDarkMode ? const Color.fromARGB(255, 54, 107, 232) : Colors.grey[400]!),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          foregroundColor: isDarkMode ? Colors.white : Colors.black87,
+        ),
+        child: Text(label),
+      ),
+    );
+  }
 }
 
 // ==================== РАБОЧЕЕ ПРОСТРАНСТВО ====================
@@ -873,18 +648,24 @@ class ProjectWorkspace extends StatelessWidget {
               : _MobileEditorView(document: state.selectedDocument!);
         }
 
+        // ✅ Цвета для тёмной темы в левой панели
+        final leftPanelBg = state.isDarkMode ? Colors.grey[900] : Colors.white;
+        final headerBg = state.isDarkMode ? Colors.green[900] : Colors.green[50];
+        final textColor = state.isDarkMode ? Colors.white : Colors.black87;
+
         return Row(
           children: [
+            // Левая панель - список документов
             Container(
               width: 300,
               decoration: BoxDecoration(
-                border: Border(right: BorderSide(color: Colors.grey[300]!)),
+                border: Border(right: BorderSide(color: state.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!)),
               ),
               child: Column(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(16),
-                    color: Colors.green[50],
+                    color: headerBg,
                     child: Row(
                       children: [
                         IconButton(
@@ -895,20 +676,32 @@ class ProjectWorkspace extends StatelessWidget {
                         Expanded(
                           child: Text(
                             state.selectedProject!.name,
-                            style: Theme.of(context).textTheme.titleMedium,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: textColor),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const Expanded(child: _DocumentsList()),
+                  // ✅ Material wrapper для ListTile
+                  Expanded(
+                    child: Material(
+                      color: leftPanelBg,
+                      child: _DocumentsList(),
+                    ),
+                  ),
                 ],
               ),
             ),
+            // Правая панель - редактор
             Expanded(
               child: state.selectedDocument != null
                   ? QuillEditorView(document: state.selectedDocument!)
-                  : const Center(child: Text('Select a document')),
+                  : Center(
+                      child: Text(
+                        'Выберите документ',
+                        style: TextStyle(color: state.isDarkMode ? Colors.white70 : Colors.black54),
+                      ),
+                    ),
             ),
           ],
         );
@@ -924,7 +717,9 @@ class _DocumentsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final docs = state.selectedProject!.documents;
+    // ✅ Сортируем документы по viewCount (самые популярные сверху)
+    final docs = List<AppDocument>.from(state.selectedProject!.documents)
+      ..sort((a, b) => b.viewCount.compareTo(a.viewCount));
 
     return ListView.builder(
       itemCount: docs.length,
@@ -941,9 +736,7 @@ class _DocumentsList extends StatelessWidget {
                 : Colors.grey[600],
           ),
           title: Text(doc.name),
-          subtitle: isSelected
-              ? null
-              : Text('Views: ${doc.viewCount}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+          subtitle: isSelected ? null : Text('Views: ${doc.viewCount}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
           onTap: () => state.selectDocument(doc),
         );
       },
@@ -1021,10 +814,7 @@ class _MobileDocList extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(state.selectedProject!.name),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => state.clearSelectedProject(),
-        ),
+        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => state.clearSelectedProject()),
       ),
       body: const _DocumentsList(),
     );
@@ -1040,10 +830,7 @@ class _MobileEditorView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(document.name),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {},
-        ),
+        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () {}),
       ),
       body: QuillEditorView(document: document),
     );
