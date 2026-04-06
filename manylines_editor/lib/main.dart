@@ -81,6 +81,9 @@ class AppState extends ChangeNotifier {
   AppDocument? _selectedDocument;
   final Map<String, quill.QuillController> _editors = {};
 
+  bool _isDarkMode = false;
+  
+
   // ==================== GETTERS ====================
   List<Project> get projects => _projects;
   List<Map<String, dynamic>> get settings => _settings;
@@ -88,7 +91,14 @@ class AppState extends ChangeNotifier {
   Project? get selectedProject => _selectedProject;
   AppDocument? get selectedDocument => _selectedDocument;
 
+  bool get isDarkMode => _isDarkMode;
+
   // ==================== METHODS ====================
+
+  void toggleDarkMode(bool value) {
+    _isDarkMode = value;
+    notifyListeners();
+  }
   
   void incrementViewCount(AppDocument doc) {
     doc.viewCount++;
@@ -210,14 +220,26 @@ void main() {
   runApp(
     ChangeNotifierProvider(
       create: (_) => AppState(),
-      child: MaterialApp(
-        title: 'Manyllines',
-        theme: ThemeData(
-          useMaterial3: true,
-          colorSchemeSeed: Colors.green,
-          fontFamily: 'Roboto',
-        ),
-        home: AppShell(),
+      child: Consumer<AppState>(
+        builder: (context, state, _) {
+          return MaterialApp(
+            title: 'Manyllines',
+            theme: state.isDarkMode 
+                ? ThemeData(
+                    useMaterial3: true,
+                    colorSchemeSeed: Colors.green,
+                    brightness: Brightness.dark,
+                    fontFamily: 'Roboto',
+                  )
+                : ThemeData(
+                    useMaterial3: true,
+                    colorSchemeSeed: Colors.green,
+                    brightness: Brightness.light,
+                    fontFamily: 'Roboto',
+                  ),
+            home: AppShell(),
+          );
+        },
       ),
     ),
   );
@@ -282,139 +304,208 @@ class ProjectsScreen extends StatelessWidget {
           ),
 
           // ✅ Список проектов с перетаскиванием (управляется Switchable)
-          Container(
-            color: Colors.green[50],
-            child: Consumer<AppState>(
-              builder: (context, state, _) {
-                if (state.switchableValue) {
-                  return ReorderableListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: state.projects.length,
-                    onReorder: state.reorderProjects,
-                    itemBuilder: (context, index) {
-                      final project = state.projects[index];
-                      return Container(
-                        key: ValueKey(project.id),  // ✅ Обязательно для ReorderableListView
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(color: Colors.green[200]!),
-                          ),
-                        ),
-                        child: ListTile(
-                          title: Text(project.name),
-                          trailing: state.switchableValue
-                              ? const Icon(Icons.drag_handle, color: Colors.grey)
-                              : null,
-                          onTap: () => state.selectProject(project),
-                        ),
-                      );
-                    },
-                  );
-                } else {
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: state.projects.length,
-                    itemBuilder: (context, index) {
-                      final project = state.projects[index];
-                      return Container(
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(color: Colors.green[200]!),
-                          ),
-                        ),
-                        child: ListTile(
-                          title: Text(project.name),
-                          onTap: () => state.selectProject(project),
-                        ),
-                      );
-                    },
-                  );
-                }
-              },
+          // Список проектов с перетаскиванием (управляется Switchable)
+          // ✅ Список проектов с перетаскиванием (управляется Switchable)
+Consumer<AppState>(
+  builder: (context, state, _) {
+    final bgColor = state.isDarkMode ? Colors.green[900] : Colors.green[50];
+    final borderColor = state.isDarkMode 
+        ? const Color.fromARGB(255, 0, 47, 22) 
+        : Colors.green.shade200;
+    final textColor = state.isDarkMode ? Colors.white : Colors.black87;
+    
+    if (state.switchableValue) {
+      // ✅ Режим с перетаскиванием (ReorderableListView)
+      return ReorderableListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: state.projects.length,
+        onReorder: state.reorderProjects,
+        itemBuilder: (context, index) {
+          final project = state.projects[index];
+          return Container(
+            key: ValueKey(project.id),
+            decoration: BoxDecoration(
+              color: bgColor,
+              border: Border(
+                bottom: BorderSide(color: borderColor),
+              ),
             ),
+            child: ListTile(
+              title: Text(project.name, style: TextStyle(color: textColor)),
+              trailing: Icon(Icons.drag_handle, 
+                  color: state.isDarkMode ? Colors.white54 : Colors.grey),
+              onTap: () => state.selectProject(project),
+            ),
+          );
+        },
+      );
+    } else {
+      // ✅ Режим БЕЗ перетаскивания (обычный список) — ПРОЕКТЫ ОТОБРАЖАЮТСЯ!
+      return Container(
+        decoration: BoxDecoration(
+          color: bgColor,
+          border: Border(
+            bottom: BorderSide(color: borderColor),
           ),
+        ),
+        child: ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: state.projects.length,
+          itemBuilder: (context, index) {
+            final project = state.projects[index];  // ← Получаем проект
+            return Container(  // ← Возвращаем виджет!
+              key: ValueKey(project.id),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: borderColor),
+                ),
+              ),
+              child: ListTile(
+                title: Text(project.name, style: TextStyle(color: textColor)),
+                // ❌ Без иконки drag_handle
+                onTap: () => state.selectProject(project),
+              ),
+            );
+          },
+        ),
+      );
+    }
+  },
+),
 
           // ✅ Настройки с перетаскиванием (управляется Switchable)
-          Container(
-            color: Colors.blue[50],
-            child: Consumer<AppState>(
-              builder: (context, state, _) {
-                final settings = state.settings;
-                
-                if (state.switchableValue) {
-                  return ReorderableListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: settings.length,
-                    onReorder: state.reorderSettings,
-                    itemBuilder: (context, index) {
-                      final setting = settings[index];
-                      final isExpanded = setting['expanded'] ?? false;
-                      
-                      return Column(
-                        key: ValueKey(setting['id']),
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildSettingRow(
-                            setting['name'],
-                            isExpanded,
-                            setting['enabled'] ?? false,
-                            setting['id'],
-                            state,
-                            isDraggable: true,
+          // Настройки с перетаскиванием (управляется Switchable)
+          Consumer<AppState>(
+            builder: (context, state, _) {
+              // ✅ Выбираем цвет в зависимости от темы
+              final bgColor = state.isDarkMode ? Colors.blue[900] : Colors.blue[50];
+              final borderColor = state.isDarkMode ? Colors.blue[700] : Colors.blue[200];
+              final textColor = state.isDarkMode ? Colors.white : Colors.black87;
+              
+              final settings = state.settings;
+              
+              if (state.switchableValue) {
+                return ReorderableListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: settings.length,
+                  onReorder: state.reorderSettings,
+                  itemBuilder: (context, index) {
+                    final setting = settings[index];
+                    final isExpanded = setting['expanded'] ?? false;
+                    
+                    return Column(
+                      key: ValueKey(setting['id']),
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border(bottom: BorderSide(color: borderColor!)),
+                            color: state.isDarkMode ? Colors.blue[800] : Colors.white,
                           ),
-                          if (setting['id'] == 'setting3' && isExpanded)
-                            _buildDescriptionSection(),
-                        ],
-                      );
-                    },
-                  );
-                } else {
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: settings.length,
-                    itemBuilder: (context, index) {
-                      final setting = settings[index];
-                      final isExpanded = setting['expanded'] ?? false;
-                      
-                      return Column(
-                        key: ValueKey(setting['id']),
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildSettingRow(
-                            setting['name'],
-                            isExpanded,
-                            setting['enabled'] ?? false,
-                            setting['id'],
-                            state,
-                            isDraggable: false,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                setting['name'],
+                                style: TextStyle(color: textColor),
+                              ),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      isExpanded ? Icons.arrow_drop_down : Icons.arrow_drop_up,
+                                      color: textColor,
+                                    ),
+                                    onPressed: () => state.toggleSettingExpansion(setting['id']),
+                                  ),
+                                  if (state.switchableValue)
+                                    Icon(Icons.drag_handle, 
+                                        color: state.isDarkMode ? Colors.white54 : Colors.grey),
+                                ],
+                              ),
+                            ],
                           ),
-                          if (setting['id'] == 'setting3' && isExpanded)
-                            _buildDescriptionSection(),
-                        ],
-                      );
-                    },
-                  );
-                }
-              },
-            ),
+                        ),
+                        if (setting['id'] == 'setting2' && isExpanded)
+                          _buildDescriptionSection2(state.isDarkMode),
+                        if (setting['id'] == 'setting3' && isExpanded)
+                          _buildDescriptionSection3(state.isDarkMode),
+                      ],
+                    );
+                  },
+                );
+              } else {
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: settings.length,
+                  itemBuilder: (context, index) {
+                    final setting = settings[index];
+                    final isExpanded = setting['expanded'] ?? false;
+                    
+                    return Column(
+                      key: ValueKey(setting['id']),
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border(bottom: BorderSide(color: borderColor!)),
+                            color: state.isDarkMode ? Colors.blue[800] : Colors.white,
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                setting['name'],
+                                style: TextStyle(color: textColor),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  isExpanded ? Icons.arrow_drop_down : Icons.arrow_drop_up,
+                                  color: textColor,
+                                ),
+                                onPressed: () => state.toggleSettingExpansion(setting['id']),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (setting['id'] == 'setting2' && isExpanded)
+                          _buildDescriptionSection2(state.isDarkMode),
+                        if (setting['id'] == 'setting3' && isExpanded)
+                          _buildDescriptionSection3(state.isDarkMode),
+                      ],
+                    );
+                  },
+                );
+              }
+            },
           ),
 
           // Additional settings (голубой фон)
-          Expanded(
-            child: Container(
-              color: Colors.blue[50],
-              padding: const EdgeInsets.all(16),
-              child: const Center(
-                child: Text(
-                  'Setting ...',
-                  style: TextStyle(color: Colors.black54),
+          // Additional settings (голубой фон) — с поддержкой тёмной темы
+          Consumer<AppState>(
+            builder: (context, state, _) {
+              final bgColor = state.isDarkMode ? const Color.fromARGB(255, 6, 58, 137) : Colors.blue[50];
+              final textColor = state.isDarkMode ? Colors.white54 : Colors.black54;
+              
+              return Expanded(
+                child: Container(
+                  color: bgColor,
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: Text(
+                      'Other Settings ...',
+                      style: TextStyle(color: textColor),
+                    ),
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ],
       ),
@@ -426,150 +517,245 @@ class ProjectsScreen extends StatelessWidget {
   }
 
   // ✅ Метод для построения секции Description (выпадает из Setting 3)
-  Widget _buildDescriptionSection() {
-    return Container(
-      color: Colors.grey[50],
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Description',
-            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+  // ✅ Метод для построения секции Description для Setting 2 (с переключением темы)
+Widget _buildDescriptionSection2(bool isDarkMode) {
+  return Container(
+    color: isDarkMode ? Colors.grey[850] : Colors.grey[50],
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Description',
+          style: TextStyle(
+            fontSize: 14, 
+            color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
           ),
-          const SizedBox(height: 12),
-          
-          // Кнопки A, B, C
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: BorderSide(color: Colors.grey[400]!),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text('A'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: BorderSide(color: Colors.grey[400]!),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text('B'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: BorderSide(color: Colors.grey[400]!),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text('C'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          
-          // Switchable
-          Consumer<AppState>(
-            builder: (context, state, _) {
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Switchable'),
-                  Switch(
-                    value: state.switchableValue,
-                    onChanged: (value) {
-                      state.setSwitchableValue(value);
-                    },
-                  ),
-                ],
-              );
-            },
-          ),
-          
-          // Listable
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Listable'),
-              IconButton(
-                icon: const Icon(Icons.arrow_drop_down),
+        ),
+        const SizedBox(height: 12),
+        
+        // Кнопки A, B, C
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
                 onPressed: () {},
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingRow(
-    String title,
-    bool expanded,
-    bool enabled,
-    String id,
-    AppState state, {
-    bool isDraggable = false,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.blue[200]!)),
-        color: Colors.white,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title),
-          Row(
-            children: [
-              IconButton(
-                icon: Icon(expanded ? Icons.arrow_drop_down : Icons.arrow_drop_up),
-                onPressed: () => state.toggleSettingExpansion(id),
-              ),
-              const SizedBox(width: 8),
-              // ✅ Чекбокс удалён
-              if (isDraggable)
-                IconButton(
-                  icon: const Icon(Icons.drag_handle, color: Colors.grey),
-                  onPressed: () {},
-                  tooltip: 'Перетащить',
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(
+                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
                 ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+                child: Text('A'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(
+                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
+                ),
+                child: Text('B'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(
+                    color: isDarkMode ? const Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
+                ),
+                child: Text('C'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        
+        // Switchable для переключения темы
+        Consumer<AppState>(
+          builder: (context, state, _) {
+            final isDark = state.isDarkMode;
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      isDark ? Icons.dark_mode : Icons.light_mode,
+                      size: 20,
+                      color: isDark ? Colors.yellow[200] : Colors.orange,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isDark ? 'Тёмная тема' : 'Светлая тема',
+                      style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+                    ),
+                  ],
+                ),
+                Switch(
+                  value: isDark,
+                  onChanged: (value) {
+                    state.toggleDarkMode(value);
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    ),
+  );
+}
 
-  Widget _buildButton(String label) {
-    return OutlinedButton(
-      onPressed: () {},
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        side: BorderSide(color: Colors.grey[400]!),
-      ),
-      child: Text(label),
-    );
-  }
+// ✅ Метод для построения секции Description для Setting 3
+Widget _buildDescriptionSection3(bool isDarkMode) {
+  return Container(
+    color: isDarkMode ? Colors.grey[850] : Colors.grey[50],
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Description',
+          style: TextStyle(
+            fontSize: 14, 
+            color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Кнопки A, B, C
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(
+                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
+                ),
+                child: Text('A'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(
+                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
+                ),
+                child: Text('B'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(
+                    color: isDarkMode ? Color.fromARGB(255, 54, 107, 232)! : Colors.grey[400]!,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  foregroundColor: isDarkMode ? Colors.white : Colors.black87,
+                ),
+                child: Text('C'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        
+        // Switchable
+        Consumer<AppState>(
+          builder: (context, state, _) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Switchable',
+                  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+                ),
+                Switch(
+                  value: state.switchableValue,
+                  onChanged: (value) {
+                    state.setSwitchableValue(value);
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+
+        
+        
+        // Listable
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Listable',
+              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+            ),
+            IconButton(
+              icon: Icon(Icons.arrow_drop_down, 
+                  color: isDarkMode ? Colors.white : Colors.black87),
+              onPressed: () {},
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+  // Widget _buildButton(String label) {
+  //   return OutlinedButton(
+  //     onPressed: () {},
+  //     style: OutlinedButton.styleFrom(
+  //       padding: const EdgeInsets.symmetric(vertical: 12),
+  //       side: BorderSide(color: Colors.grey[400]!),
+  //     ),
+  //     child: Text(label),
+  //   );
+  // }
+
+  
 }
 
 // ==================== РАБОЧЕЕ ПРОСТРАНСТВО ====================
