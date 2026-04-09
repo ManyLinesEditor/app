@@ -43,16 +43,15 @@ class AppDocument {
 // ==================== STATE ====================
 class AppState extends ChangeNotifier {
   final List<Project> _projects = [
-    // ✅ Проекты создаются ПУСТЫМИ (без документов)
     Project(
       id: 'p1',
       name: 'Project 1',
-      documents: [], // ← Пустой список!
+      documents: [],
     ),
     Project(
       id: 'p2',
       name: 'Project 2',
-      documents: [], // ← Пустой список!
+      documents: [],
     ),
   ];
 
@@ -87,7 +86,6 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Создаёт НОВЫЙ контроллер для каждого документа
   quill.QuillController getOrCreateController(AppDocument doc) {
     final controller = quill.QuillController(
       document: quill.Document.fromJson(doc.content.toJson()),
@@ -101,37 +99,36 @@ class AppState extends ChangeNotifier {
     return controller;
   }
 
-  // ✅ Project создаётся БЕЗ документов
-  void addProject() {
+  // ✅ Создаёт проект с указанным именем
+  void addProject(String name) {
     final newId = 'p${_projects.length + 1}';
     _projects.add(Project(
       id: newId,
-      name: 'Project ${_projects.length + 1}',
-      documents: [], // ← Пустой список!
+      name: name,
+      documents: [],
     ));
     notifyListeners();
   }
 
-  // ✅ Добавляет документ в текущий проект
-  void addDocumentToCurrentProject() {
+  // ✅ Создаёт документ с указанным именем
+  void addDocumentToCurrentProject(String name) {
     if (_selectedProject == null) return;
     
     final newDoc = AppDocument(
       id: 'd${DateTime.now().millisecondsSinceEpoch}',
-      name: 'Document ${_selectedProject!.documents.length + 1}',
+      name: name,
       viewCount: 0,
       content: Delta()..insert('New document content...\n'),
     );
     
     _selectedProject!.documents.add(newDoc);
-    _selectedDocument = newDoc; // ✅ Сразу открываем новый документ
+    _selectedDocument = newDoc;
     notifyListeners();
   }
 
   void selectProject(Project project) {
     _selectedProject = project;
     
-    // ✅ Если есть документы - выбираем самый популярный
     if (project.documents.isNotEmpty) {
       final mostUsed = project.documents.reduce((a, b) => 
         a.viewCount > b.viewCount ? a : b
@@ -139,7 +136,6 @@ class AppState extends ChangeNotifier {
       _selectedDocument = mostUsed;
       incrementViewCount(mostUsed);
     } else {
-      // ✅ Если документов нет - очищаем selectedDocument
       _selectedDocument = null;
     }
     notifyListeners();
@@ -265,7 +261,7 @@ class ProjectsScreen extends StatelessWidget {
     return Scaffold(
       body: Column(
         children: [
-          // Header с Logo и Manyllines
+          // Header
           Consumer<AppState>(
             builder: (context, state, _) {
               final headerBg = state.isDarkMode ? Colors.grey[850] : Colors.white;
@@ -487,12 +483,86 @@ class ProjectsScreen extends StatelessWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.read<AppState>().addProject(),
+        onPressed: () => _showCreateProjectDialog(context),
         child: const Icon(Icons.add),
       ),
     );
   }
 
+  // ✅ Диалог создания проекта
+  void _showCreateProjectDialog(BuildContext context) {
+    final controller = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    
+    showDialog(
+      context: context,
+      builder: (context) => Consumer<AppState>(
+        builder: (context, state, _) {
+          final isDarkMode = state.isDarkMode;
+          return AlertDialog(
+            backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,
+            title: Text(
+              'Новый проект',
+              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+            ),
+            content: Form(
+              key: formKey,
+              child: TextFormField(
+                controller: controller,
+                autofocus: true,
+                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Название проекта',
+                  labelStyle: TextStyle(color: isDarkMode ? Colors.grey[400] : Colors.grey[600]),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.green[700]!),
+                  ),
+                  prefixIcon: Icon(Icons.folder, color: Colors.green[700]),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Введите название проекта';
+                  }
+                  return null;
+                },
+                onFieldSubmitted: (_) {
+                  if (formKey.currentState!.validate()) {
+                    state.addProject(controller.text.trim());
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Отмена', style: TextStyle(color: Colors.grey[600])),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (formKey.currentState!.validate()) {
+                    state.addProject(controller.text.trim());
+                    Navigator.pop(context);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green[700],
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Создать'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // ==================== ОПИСАНИЯ ДЛЯ НАСТРОЕК ====================
   Widget _buildDescriptionSection2(bool isDarkMode) {
     return Container(
       color: isDarkMode ? Colors.grey[850] : Colors.grey[50],
@@ -606,7 +676,7 @@ class ProjectsScreen extends StatelessWidget {
         onPressed: () {},
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 12),
-          side: BorderSide(color: isDarkMode ? const Color.fromARGB(163, 162, 164, 170) : Colors.grey[400]!),
+          side: BorderSide(color: isDarkMode ? const Color.fromARGB(255, 54, 107, 232) : Colors.grey[400]!),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           foregroundColor: isDarkMode ? Colors.white : Colors.black87,
         ),
@@ -616,7 +686,6 @@ class ProjectsScreen extends StatelessWidget {
   }
 }
 
-// ==================== РАБОЧЕЕ ПРОСТРАНСТВО ====================
 // ==================== РАБОЧЕЕ ПРОСТРАНСТВО ====================
 class ProjectWorkspace extends StatelessWidget {
   const ProjectWorkspace({super.key});
@@ -628,7 +697,6 @@ class ProjectWorkspace extends StatelessWidget {
         final isWide = constraints.maxWidth >= 700;
 
         if (!isWide) {
-          // ✅ Используем watch для мобильных
           return Consumer<AppState>(
             builder: (context, state, _) {
               return state.selectedDocument == null
@@ -638,7 +706,6 @@ class ProjectWorkspace extends StatelessWidget {
           );
         }
 
-        // ✅ Используем Selector для отслеживания selectedDocument
         return Selector<AppState, AppDocument?>(
           selector: (_, state) => state.selectedDocument,
           builder: (context, selectedDocument, _) {
@@ -699,7 +766,7 @@ class ProjectWorkspace extends StatelessWidget {
                           child: SizedBox(
                             width: double.infinity,
                             child: OutlinedButton.icon(
-                              onPressed: () => state.addDocumentToCurrentProject(),
+                              onPressed: () => _showCreateDocumentDialog(context),
                               icon: const Icon(Icons.add, size: 18),
                               label: const Text('Новый документ'),
                               style: OutlinedButton.styleFrom(
@@ -746,7 +813,7 @@ class ProjectWorkspace extends StatelessWidget {
                         ),
                         const SizedBox(height: 24),
                         ElevatedButton.icon(
-                          onPressed: () => state.addDocumentToCurrentProject(),
+                          onPressed: () => _showCreateDocumentDialog(context),
                           icon: const Icon(Icons.add),
                           label: const Text('Создать первый документ'),
                           style: ElevatedButton.styleFrom(
@@ -760,9 +827,82 @@ class ProjectWorkspace extends StatelessWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => state.addDocumentToCurrentProject(),
+        onPressed: () => _showCreateDocumentDialog(context),
         tooltip: 'Создать документ',
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  // ✅ Диалог создания документа
+  void _showCreateDocumentDialog(BuildContext context) {
+    final controller = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    
+    showDialog(
+      context: context,
+      builder: (context) => Consumer<AppState>(
+        builder: (context, state, _) {
+          final isDarkMode = state.isDarkMode;
+          return AlertDialog(
+            backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,
+            title: Text(
+              'Новый документ',
+              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+            ),
+            content: Form(
+              key: formKey,
+              child: TextFormField(
+                controller: controller,
+                autofocus: true,
+                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  labelText: 'Название документа',
+                  labelStyle: TextStyle(color: isDarkMode ? Colors.grey[400] : Colors.grey[600]),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.green[700]!),
+                  ),
+                  prefixIcon: Icon(Icons.description, color: Colors.green[700]),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Введите название документа';
+                  }
+                  return null;
+                },
+                onFieldSubmitted: (_) {
+                  if (formKey.currentState!.validate()) {
+                    state.addDocumentToCurrentProject(controller.text.trim());
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Отмена', style: TextStyle(color: Colors.grey[600])),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (formKey.currentState!.validate()) {
+                    state.addDocumentToCurrentProject(controller.text.trim());
+                    Navigator.pop(context);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green[700],
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Создать'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -917,15 +1057,82 @@ class _MobileDocList extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () => state.addDocumentToCurrentProject(),
+            onPressed: () => _showCreateDocumentDialog(context),
             tooltip: 'Новый документ',
           ),
         ],
       ),
       body: const _DocumentsList(),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => state.addDocumentToCurrentProject(),
+        onPressed: () => _showCreateDocumentDialog(context),
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  void _showCreateDocumentDialog(BuildContext context) {
+    final controller = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final state = context.read<AppState>();
+    final isDarkMode = state.isDarkMode;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,
+        title: Text(
+          'Новый документ',
+          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+        ),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87),
+            decoration: InputDecoration(
+              labelText: 'Название документа',
+              labelStyle: TextStyle(color: isDarkMode ? Colors.grey[400] : Colors.grey[600]),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.green[700]!),
+              ),
+              prefixIcon: Icon(Icons.description, color: Colors.green[700]),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Введите название документа';
+              }
+              return null;
+            },
+            onFieldSubmitted: (_) {
+              if (formKey.currentState!.validate()) {
+                state.addDocumentToCurrentProject(controller.text.trim());
+                Navigator.pop(context);
+              }
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Отмена', style: TextStyle(color: Colors.grey[600])),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                state.addDocumentToCurrentProject(controller.text.trim());
+                Navigator.pop(context);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green[700],
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Создать'),
+          ),
+        ],
       ),
     );
   }
