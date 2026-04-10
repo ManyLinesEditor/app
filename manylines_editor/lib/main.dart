@@ -69,6 +69,7 @@ class AppState extends ChangeNotifier {
   Project? _selectedProject;
   AppDocument? _selectedDocument;
   bool _isDarkMode = false;
+  bool _isGraphView = false;  // ✅ Режим просмотра (список/граф)
 
   List<Project> get projects => _projects;
   List<Map<String, dynamic>> get settings => _settings;
@@ -76,9 +77,16 @@ class AppState extends ChangeNotifier {
   Project? get selectedProject => _selectedProject;
   AppDocument? get selectedDocument => _selectedDocument;
   bool get isDarkMode => _isDarkMode;
+  bool get isGraphView => _isGraphView;  // ✅ Геттер для режима просмотра
 
   void toggleDarkMode(bool value) {
     _isDarkMode = value;
+    notifyListeners();
+  }
+
+  // ✅ Переключение между списком и графом
+  void toggleViewMode() {
+    _isGraphView = !_isGraphView;
     notifyListeners();
   }
 
@@ -144,12 +152,10 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Исправлено: теперь ищем родителя среди документов ВЫШЕ текущего
   void indentDocument(int index) {
     if (_selectedProject == null || index <= 0) return;
     final docs = _selectedProject!.documents;
     
-    // Ищем последний документ с parentId == null и !isPinned выше текущего
     AppDocument? parentDoc;
     for (int i = index - 1; i >= 0; i--) {
       if (docs[i].parentId == null && !docs[i].isPinned) {
@@ -659,7 +665,17 @@ class ProjectWorkspace extends StatelessWidget {
                     color: leftPanelBg,
                     child: Column(
                       children: [
-                        Expanded(child: _DocumentsList()),
+                        // ✅ Переключение между списком и графом
+                        Expanded(
+                          child: Selector<AppState, bool>(
+                            selector: (_, state) => state.isGraphView,
+                            builder: (context, isGraphView, _) {
+                              return isGraphView
+                                  ? _DocumentsGraph()  // ✅ Графовое представление
+                                  : _DocumentsList();  // ✅ Список
+                            },
+                          ),
+                        ),
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(border: Border(top: BorderSide(color: borderColor))),
@@ -709,9 +725,27 @@ class ProjectWorkspace extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(onPressed: () => _showCreateDocumentDialog(context), tooltip: 'Создать документ', child: const Icon(Icons.add)),
-    );
-  }
+      floatingActionButton: Selector<AppState, bool>(
+      selector: (_, state) => state.isGraphView,
+      builder: (context, isGraphView, _) {
+        return FloatingActionButton(
+          onPressed: () => context.read<AppState>().toggleViewMode(),
+          tooltip: isGraphView ? 'Список' : 'Граф',
+          child: Icon(isGraphView ? Icons.list : Icons.account_tree),
+        );
+      },
+    ),
+    
+    persistentFooterButtons: [
+      FloatingActionButton(
+        heroTag: 'createDoc',
+        onPressed: () => _showCreateDocumentDialog(context),
+        tooltip: 'Новый документ',
+        child: const Icon(Icons.add),
+      ),
+    ],
+  );
+}
 
   void _showCreateDocumentDialog(BuildContext context) {
     final controller = TextEditingController();
@@ -769,7 +803,7 @@ class ProjectWorkspace extends StatelessWidget {
   }
 }
 
-// ==================== КОМПОНЕНТЫ ====================
+// ==================== СПИСОК ДОКУМЕНТОВ ====================
 class _DocumentsList extends StatelessWidget {
   const _DocumentsList();
   
@@ -783,7 +817,6 @@ class _DocumentsList extends StatelessWidget {
 
     return Column(
       children: [
-        // ✅ Закреплённые документы (зелёный фон, перетаскивание, чекбоксы)
         if (pinnedDocs.isNotEmpty)
           Container(
             color: isDarkMode ? Colors.green[900]!.withOpacity(0.3) : Colors.green[50],
@@ -851,8 +884,6 @@ class _DocumentsList extends StatelessWidget {
               },
             ),
           ),
-        
-        // ✅ Обычные документы (синий фон, скроллинг, свайп для поддокументов, чекбоксы)
         Expanded(
           child: Container(
             color: isDarkMode ? Colors.blue[900]!.withOpacity(0.2) : Colors.blue[50],
@@ -863,7 +894,6 @@ class _DocumentsList extends StatelessWidget {
     );
   }
 
-  // ✅ Исправлено: передаём project для получения реального индекса
   Widget _buildDismissibleList(Project project, List<AppDocument> docs, AppState state, bool isDarkMode, BuildContext context) {
     int mainIndex = 0;
     int childIndex = 0;
@@ -873,8 +903,6 @@ class _DocumentsList extends StatelessWidget {
       itemBuilder: (context, index) {
         final doc = docs[index];
         final isSelected = state.selectedDocument?.id == doc.id;
-
-        // ✅ Находим РЕАЛЬНЫЙ индекс в project.documents
         final actualIndex = project.documents.indexOf(doc);
 
         String number;
@@ -903,7 +931,6 @@ class _DocumentsList extends StatelessWidget {
             child: const Icon(Icons.arrow_forward, color: Colors.white),
           ),
           confirmDismiss: (direction) async {
-            // ✅ Используем actualIndex вместо index
             if (direction == DismissDirection.startToEnd) {
               state.indentDocument(actualIndex);
             } else if (direction == DismissDirection.endToStart) {
@@ -972,6 +999,152 @@ class _DocumentsList extends StatelessWidget {
   }
 }
 
+// ==================== ГРАФОВОЕ ПРЕДСТАВЛЕНИЕ ====================
+class _DocumentsGraph extends StatelessWidget {
+  const _DocumentsGraph();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+    final project = state.selectedProject!;
+    final docs = project.documents;
+    final isDarkMode = state.isDarkMode;
+
+    if (docs.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.account_tree_outlined, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'Нет документов',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ✅ Строим граф документов
+            ..._buildDocumentNodes(docs, state, isDarkMode),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildDocumentNodes(List<AppDocument> docs, AppState state, bool isDarkMode) {
+    final widgets = <Widget>[];
+    final rootDocs = docs.where((d) => d.parentId == null).toList();
+
+    for (var doc in rootDocs) {
+      widgets.add(_buildDocumentNode(doc, docs, state, isDarkMode));
+      widgets.add(const SizedBox(height: 20));
+    }
+
+    return widgets;
+  }
+
+  Widget _buildDocumentNode(AppDocument doc, List<AppDocument> allDocs, AppState state, bool isDarkMode) {
+    final isSelected = state.selectedDocument?.id == doc.id;
+    final children = allDocs.where((d) => d.parentId == doc.id).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ✅ Узел документа
+        GestureDetector(
+          onTap: () => state.selectDocument(doc),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? (isDarkMode ? Colors.green[800] : Colors.green[100])
+                  : (isDarkMode ? Colors.grey[800] : Colors.white),
+              border: Border.all(
+                color: isSelected
+                    ? Colors.green[700]!
+                    : (isDarkMode ? Colors.grey[600]! : Colors.grey[400]!),
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  doc.isPinned ? Icons.push_pin : Icons.insert_drive_file,
+                  color: isSelected ? Colors.green[700] : Colors.grey[600],
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  doc.name,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // ✅ Стрелки и поддокументы
+        if (children.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          ...children.asMap().entries.map((entry) {
+            final isLast = entry.key == children.length - 1;
+            final childDoc = entry.value;
+            return Padding(
+              padding: const EdgeInsets.only(left: 40),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ✅ Стрелка
+                  Row(
+                    children: [
+                      Container(
+                        width: 30,
+                        height: 2,
+                        color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
+                      ),
+                      Icon(
+                        Icons.arrow_forward,
+                        size: 16,
+                        color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // ✅ Рекурсивно строим поддокументы
+                  _buildDocumentNode(childDoc, allDocs, state, isDarkMode),
+                ],
+              ),
+            );
+          }).toList(),
+        ],
+      ],
+    );
+  }
+}
+
+// ==================== РЕДАКТОР ====================
 class QuillEditorView extends StatefulWidget {
   final AppDocument document;
   const QuillEditorView({super.key, required this.document});
@@ -1054,10 +1227,25 @@ class _MobileDocList extends StatelessWidget {
       appBar: AppBar(
         title: Text(state.selectedProject!.name),
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => state.clearSelectedProject()),
-        actions: [IconButton(icon: const Icon(Icons.add), onPressed: () => _showCreateDocumentDialog(context), tooltip: 'Новый документ')],
+        actions: [
+          IconButton(
+            icon: Icon(state.isGraphView ? Icons.list : Icons.account_tree),
+            onPressed: () => state.toggleViewMode(),
+            tooltip: state.isGraphView ? 'Список' : 'Граф',
+          ),
+          IconButton(icon: const Icon(Icons.add), onPressed: () => _showCreateDocumentDialog(context), tooltip: 'Новый документ'),
+        ],
       ),
-      body: const _DocumentsList(),
-      floatingActionButton: FloatingActionButton(onPressed: () => _showCreateDocumentDialog(context), child: const Icon(Icons.add)),
+      body: Selector<AppState, bool>(
+        selector: (_, state) => state.isGraphView,
+        builder: (context, isGraphView, _) {
+          return isGraphView ? const _DocumentsGraph() : const _DocumentsList();
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showCreateDocumentDialog(context),
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
