@@ -71,6 +71,7 @@ class AppState extends ChangeNotifier {
   AppDocument? _secondSelectedDocument;
   bool _isDarkMode = false;
   bool _isGraphView = false;
+  bool _isSidePanelCollapsed = false;
 
   List<Project> get projects => _projects;
   List<Map<String, dynamic>> get settings => _settings;
@@ -80,9 +81,15 @@ class AppState extends ChangeNotifier {
   AppDocument? get secondSelectedDocument => _secondSelectedDocument;
   bool get isDarkMode => _isDarkMode;
   bool get isGraphView => _isGraphView;
+  bool get isSidePanelCollapsed => _isSidePanelCollapsed;
 
   void toggleDarkMode(bool value) {
     _isDarkMode = value;
+    notifyListeners();
+  }
+
+  void toggleSidePanel() {
+    _isSidePanelCollapsed = !_isSidePanelCollapsed;
     notifyListeners();
   }
 
@@ -136,37 +143,49 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Удалить документ
-  void deleteDocument(AppDocument doc) {
-    if (_selectedProject == null) return;
-    
-    // Если удаляем открытый документ — закрываем редактор
-    if (_selectedDocument?.id == doc.id) _selectedDocument = null;
-    if (_secondSelectedDocument?.id == doc.id) _secondSelectedDocument = null;
-    
-    _selectedProject!.documents.remove(doc);
-    notifyListeners();
-  }
-
+  // ✅ Закрепить/открепить документ
   void toggleDocumentPin(AppDocument doc) {
     doc.isPinned = !doc.isPinned;
     notifyListeners();
   }
 
-  void reorderPinnedDocuments(int oldIndex, int newIndex) {
+  // ✅ В классе AppState добавьте этот метод:
+void reorderPinnedDocuments(int oldIndex, int newIndex) {
+  if (_selectedProject == null) return;
+  
+  final pinnedDocs = _selectedProject!.pinnedDocuments;
+  if (newIndex > oldIndex) newIndex -= 1;
+  
+  final doc = pinnedDocs.removeAt(oldIndex);
+  final targetDoc = pinnedDocs[newIndex];
+  
+  // Находим индексы в основном списке
+  final docMainIndex = _selectedProject!.documents.indexOf(doc);
+  final targetMainIndex = _selectedProject!.documents.indexOf(targetDoc);
+  
+  // Перемещаем в основном списке
+  _selectedProject!.documents.removeAt(docMainIndex);
+  _selectedProject!.documents.insert(targetMainIndex, doc);
+  
+  notifyListeners();
+}
+
+  // ✅ Удалить документ
+  void deleteDocument(AppDocument doc) {
     if (_selectedProject == null) return;
-    final pinnedDocs = _selectedProject!.pinnedDocuments;
-    if (newIndex > oldIndex) newIndex -= 1;
     
-    final doc = pinnedDocs.removeAt(oldIndex);
-    final targetDoc = pinnedDocs[newIndex];
+    // ✅ Сначала удаляем документ из проекта
+    _selectedProject!.documents.remove(doc);
     
-    final docMainIndex = _selectedProject!.documents.indexOf(doc);
-    final targetMainIndex = _selectedProject!.documents.indexOf(targetDoc);
+    // ✅ Затем закрываем редакторы, если они используют этот документ
+    if (_selectedDocument?.id == doc.id) {
+      _selectedDocument = null;
+    }
+    if (_secondSelectedDocument?.id == doc.id) {
+      _secondSelectedDocument = null;
+    }
     
-    _selectedProject!.documents.removeAt(docMainIndex);
-    _selectedProject!.documents.insert(targetMainIndex, doc);
-    
+    // ✅ И только потом уведомляем слушателей
     notifyListeners();
   }
 
@@ -676,62 +695,117 @@ class ProjectWorkspace extends StatelessWidget {
   final borderColor = state.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
   
   final showTwoEditors = state.secondSelectedDocument != null;
+  final isPanelCollapsed = state.isSidePanelCollapsed;  // ✅ Получаем состояние
   
   return Scaffold(
     body: Row(
       children: [
-        Container(
-          width: 300,
-          decoration: BoxDecoration(border: Border(right: BorderSide(color: borderColor))),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                color: headerBg,
-                child: Row(
+        // ✅ Боковая панель с анимацией сворачивания
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          width: isPanelCollapsed ? 0 : 300,
+          decoration: BoxDecoration(
+            border: Border(right: BorderSide(color: borderColor)),
+          ),
+          child: isPanelCollapsed
+              ? const SizedBox.shrink()
+              : Column(
                   children: [
-                    IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => state.clearSelectedProject(), tooltip: 'Back to projects'),
-                    Expanded(child: Text(state.selectedProject!.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: textColor))),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Material(
-                  color: leftPanelBg,
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: Selector<AppState, bool>(
-                          selector: (_, state) => state.isGraphView,
-                          builder: (context, isGraphView, _) {
-                            return isGraphView ? _DocumentsGraph() : _DocumentsList();
-                          },
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(border: Border(top: BorderSide(color: borderColor))),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () => _showCreateDocumentDialog(context),
-                            icon: const Icon(Icons.add, size: 18),
-                            label: const Text('Новый документ'),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              foregroundColor: state.isDarkMode ? Colors.white : Colors.green[700],
-                              side: BorderSide(color: state.isDarkMode ? Colors.green[400]! : Colors.green[700]!),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      color: headerBg,
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back),
+                            onPressed: () => state.clearSelectedProject(),
+                            tooltip: 'Back to projects',
+                          ),
+                          Expanded(
+                            child: Text(
+                              state.selectedProject!.name,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: textColor),
                             ),
                           ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Material(
+                        color: leftPanelBg,
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: Selector<AppState, bool>(
+                                selector: (_, state) => state.isGraphView,
+                                builder: (context, isGraphView, _) {
+                                  return isGraphView ? _DocumentsGraph() : _DocumentsList();
+                                },
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(border: Border(top: BorderSide(color: borderColor))),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _showCreateDocumentDialog(context),
+                                  icon: const Icon(Icons.add, size: 18),
+                                  label: const Text('Новый документ'),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    foregroundColor: state.isDarkMode ? Colors.white : Colors.green[700],
+                                    side: BorderSide(color: state.isDarkMode ? Colors.green[400]! : Colors.green[700]!),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+        ),
+        
+        // ✅ Кнопка-вкладка для сворачивания/разворачивания
+        Container(
+            width: 24,
+            decoration: BoxDecoration(
+              color: isPanelCollapsed ? (state.isDarkMode ? Colors.grey[800] : Colors.grey[200]) : Colors.transparent,
+              border: Border(right: BorderSide(color: borderColor)),
+            ),
+            child: Column(
+              children: [
+                // ✅ Регулируйте высоту верхнего отступа
+                const SizedBox(height: 100),  // Было: Spacer()
+                
+                // ✅ Кнопка сворачивания/разворачивания
+                GestureDetector(
+                  onTap: () => state.toggleSidePanel(),
+                  child: Container(
+                    width: 24,
+                    height: 82,
+                    decoration: BoxDecoration(
+                      color: state.isDarkMode ? Colors.grey[700] : Colors.grey[300],
+                      borderRadius: BorderRadius.zero,
+                    ),
+                    child: Icon(
+                      isPanelCollapsed ? Icons.chevron_right : Icons.chevron_left,
+                      size: 20,
+                      color: textColor,
+                    ),
                   ),
                 ),
-              ),
-            ],
+                
+                // ✅ Оставшееся пространство
+                const Expanded(child: SizedBox()),  // Было: Spacer()
+              ],
+            ),
           ),
-        ),
+        
+        // ✅ Редакторы занимают всё оставшееся пространство
         Expanded(
           child: showTwoEditors
               ? _buildTwoEditorsLayout(context, state, borderColor, textColor)
@@ -761,161 +835,159 @@ class ProjectWorkspace extends StatelessWidget {
 }
 
   // ✅ Макет с одним редактором (с toolbar)
-// ✅ Макет с одним редактором (с toolbar)
-Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocument, AppState state, Color textColor) {
-  final project = state.selectedProject;
-  final hasDocuments = project != null && project.documents.isNotEmpty;
-  
-  if (selectedDocument == null) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            hasDocuments ? Icons.touch_app : Icons.description_outlined,
-            size: 64,
-            color: state.isDarkMode ? Colors.white30 : Colors.black26,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            // ✅ Разные сообщения в зависимости от наличия документов
-            hasDocuments ? 'Выберите документ' : 'В проекте нет документов',
-            style: TextStyle(fontSize: 18, color: state.isDarkMode ? Colors.white70 : Colors.black54),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            hasDocuments
-                ? 'Кликните на документ в списке слева'
-                : 'Нажмите кнопку "+ Новый документ" чтобы создать',
-            style: TextStyle(color: state.isDarkMode ? Colors.white54 : Colors.black45),
-          ),
-          const SizedBox(height: 24),
-          if (!hasDocuments)
-            ElevatedButton.icon(
-              onPressed: () => _showCreateDocumentDialog(context),
-              icon: const Icon(Icons.add),
-              label: const Text('Создать первый документ'),
-              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)),
+  Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocument, AppState state, Color textColor) {
+    final project = state.selectedProject;
+    final hasDocuments = project != null && project.documents.isNotEmpty;
+    
+    if (selectedDocument == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              hasDocuments ? Icons.touch_app : Icons.description_outlined,
+              size: 64,
+              color: state.isDarkMode ? Colors.white30 : Colors.black26,
             ),
-        ],
-      ),
+            const SizedBox(height: 16),
+            Text(
+              hasDocuments ? 'Выберите документ' : 'В проекте нет документов',
+              style: TextStyle(fontSize: 18, color: state.isDarkMode ? Colors.white70 : Colors.black54),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              hasDocuments
+                  ? 'Кликните на документ в списке слева'
+                  : 'Нажмите кнопку "+ Новый документ" чтобы создать',
+              style: TextStyle(color: state.isDarkMode ? Colors.white54 : Colors.black45),
+            ),
+            const SizedBox(height: 24),
+            if (!hasDocuments)
+              ElevatedButton.icon(
+                onPressed: () => _showCreateDocumentDialog(context),
+                icon: const Icon(Icons.add),
+                label: const Text('Создать первый документ'),
+                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)),
+              ),
+          ],
+        ),
+      );
+    }
+
+    // ✅ Редактор с toolbar
+    return Column(
+      children: [
+        // Toolbar первого редактора
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          color: state.isDarkMode ? Colors.grey[850] : Colors.grey[100],
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  selectedDocument.name,
+                  style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, size: 20),
+                onPressed: () => state.closeFirstEditor(),
+                tooltip: 'Закрыть',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+        ),
+        // Контент редактора
+        Expanded(
+          child: QuillEditorView(document: selectedDocument, editorIndex: 1),
+        ),
+      ],
     );
   }
 
-  // ✅ Редактор с toolbar
-  return Column(
-    children: [
-      // Toolbar первого редактора
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        color: state.isDarkMode ? Colors.grey[850] : Colors.grey[100],
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                selectedDocument.name,
-                style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.close, size: 20),
-              onPressed: () => state.closeFirstEditor(),
-              tooltip: 'Закрыть',
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-          ],
-        ),
-      ),
-      // Контент редактора
-      Expanded(
-        child: QuillEditorView(document: selectedDocument, editorIndex: 1),
-      ),
-    ],
-  );
-}
-
   // ✅ Макет с двумя редакторами
-Widget _buildTwoEditorsLayout(BuildContext context, AppState state, Color borderColor, Color textColor) {
-  return Row(
-    children: [
-      // ✅ Первый редактор (50% ширины) с toolbar
-      Expanded(
-        child: Column(
-          children: [
-            // Toolbar первого редактора
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              color: state.isDarkMode ? Colors.grey[850] : Colors.grey[100],
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      state.selectedDocument?.name ?? 'Первый редактор',
-                      style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
-                      overflow: TextOverflow.ellipsis,
+  Widget _buildTwoEditorsLayout(BuildContext context, AppState state, Color borderColor, Color textColor) {
+    return Row(
+      children: [
+        // ✅ Первый редактор (50% ширины) с toolbar
+        Expanded(
+          child: Column(
+            children: [
+              // Toolbar первого редактора
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                color: state.isDarkMode ? Colors.grey[850] : Colors.grey[100],
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        state.selectedDocument?.name ?? 'Первый редактор',
+                        style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 20),
-                    onPressed: () => state.closeFirstEditor(),
-                    tooltip: 'Закрыть',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => state.closeFirstEditor(),
+                      tooltip: 'Закрыть',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            // Контент первого редактора
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(border: Border(right: BorderSide(color: borderColor))),
-                child: state.selectedDocument != null
-                    ? QuillEditorView(document: state.selectedDocument!, editorIndex: 1)
+              // Контент первого редактора
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(border: Border(right: BorderSide(color: borderColor))),
+                  child: state.selectedDocument != null
+                      ? QuillEditorView(document: state.selectedDocument!, editorIndex: 1)
+                      : Center(child: Text('Выберите документ', style: TextStyle(color: textColor))),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // ✅ Второй редактор (50% ширины) с toolbar
+        Expanded(
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                color: state.isDarkMode ? Colors.grey[850] : Colors.grey[100],
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        state.secondSelectedDocument?.name ?? 'Второй редактор',
+                        style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => state.closeSecondEditor(),
+                      tooltip: 'Закрыть',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: state.secondSelectedDocument != null
+                    ? QuillEditorView(document: state.secondSelectedDocument!, editorIndex: 2)
                     : Center(child: Text('Выберите документ', style: TextStyle(color: textColor))),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-      // ✅ Второй редактор (50% ширины) с toolbar
-      Expanded(
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              color: state.isDarkMode ? Colors.grey[850] : Colors.grey[100],
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      state.secondSelectedDocument?.name ?? 'Второй редактор',
-                      style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 20),
-                    onPressed: () => state.closeSecondEditor(),
-                    tooltip: 'Закрыть',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: state.secondSelectedDocument != null
-                  ? QuillEditorView(document: state.secondSelectedDocument!, editorIndex: 2)
-                  : Center(child: Text('Выберите документ', style: TextStyle(color: textColor))),
-            ),
-          ],
-        ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
   void _showCreateDocumentDialog(BuildContext context) {
     final controller = TextEditingController();
@@ -1596,6 +1668,22 @@ class _MobileEditorView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(document.name), leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () {})),
       body: QuillEditorView(document: document),
+    );
+  }
+}
+
+class TestApp extends StatelessWidget {
+  const TestApp({super.key});
+  
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => AppState(),
+      child: MaterialApp(
+        title: 'Manyllines Test',
+        // ✅ Не используем локализации в тестах - они не инициализируются в test environment
+        home: const AppShell(),
+      ),
     );
   }
 }
