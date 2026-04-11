@@ -5,6 +5,22 @@ import 'package:dart_quill_delta/dart_quill_delta.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 // ==================== МОДЕЛИ ====================
+class GlossaryEntry {
+  final String id;
+  final String term;
+  String definition;
+  bool isExpanded;
+  DateTime createdAt;
+
+  GlossaryEntry({
+    required this.id,
+    required this.term,
+    this.definition = '',
+    this.isExpanded = false,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+}
+
 class Project {
   final String id;
   final String name;
@@ -39,6 +55,7 @@ class AppDocument {
   bool isPinned;
   String? parentId;
   Delta content;
+  List<GlossaryEntry> glossary;
 
   AppDocument({
     required this.id,
@@ -47,6 +64,7 @@ class AppDocument {
     this.isPinned = false,
     this.parentId,
     required this.content,
+    this.glossary = const [],
   });
 
   bool get isChild => parentId != null;
@@ -72,6 +90,8 @@ class AppState extends ChangeNotifier {
   bool _isDarkMode = false;
   bool _isGraphView = false;
   bool _isSidePanelCollapsed = false;
+  bool _isGlossaryPanelOpen = false;
+  String? _selectedTextForGlossary;
 
   List<Project> get projects => _projects;
   List<Map<String, dynamic>> get settings => _settings;
@@ -82,14 +102,11 @@ class AppState extends ChangeNotifier {
   bool get isDarkMode => _isDarkMode;
   bool get isGraphView => _isGraphView;
   bool get isSidePanelCollapsed => _isSidePanelCollapsed;
+  bool get isGlossaryPanelOpen => _isGlossaryPanelOpen;
+  String? get selectedTextForGlossary => _selectedTextForGlossary;
 
   void toggleDarkMode(bool value) {
     _isDarkMode = value;
-    notifyListeners();
-  }
-
-  void toggleSidePanel() {
-    _isSidePanelCollapsed = !_isSidePanelCollapsed;
     notifyListeners();
   }
 
@@ -101,6 +118,155 @@ class AppState extends ChangeNotifier {
   void toggleViewMode() {
     _isGraphView = !_isGraphView;
     notifyListeners();
+  }
+
+  void toggleSidePanel() {
+    _isSidePanelCollapsed = !_isSidePanelCollapsed;
+    notifyListeners();
+  }
+
+  void toggleGlossaryPanel() {
+    _isGlossaryPanelOpen = !_isGlossaryPanelOpen;
+    notifyListeners();
+  }
+
+  void setSelectedTextForGlossary(String text) {
+    _selectedTextForGlossary = text;
+    notifyListeners();
+  }
+
+  void clearSelectedTextForGlossary() {
+    _selectedTextForGlossary = null;
+    notifyListeners();
+  }
+
+  // ✅ Обновить документ в проекте
+  void _updateDocumentInProject(AppDocument updatedDocument) {
+    if (_selectedProject == null) return;
+    
+    final index = _selectedProject!.documents.indexWhere((d) => d.id == updatedDocument.id);
+    if (index != -1) {
+      _selectedProject!.documents[index] = updatedDocument;
+      notifyListeners();
+    }
+  }
+
+  // ✅ Добавить запись в глоссарий
+  void addGlossaryEntry(String term) {
+    if (_selectedDocument == null) return;
+    
+    final newEntry = GlossaryEntry(
+      id: 'g${DateTime.now().millisecondsSinceEpoch}',
+      term: term,
+      definition: '',
+      isExpanded: true,
+    );
+    
+    final updatedGlossary = List<GlossaryEntry>.from(_selectedDocument!.glossary)
+      ..add(newEntry);
+    
+    final updatedDocument = AppDocument(
+      id: _selectedDocument!.id,
+      name: _selectedDocument!.name,
+      viewCount: _selectedDocument!.viewCount,
+      isPinned: _selectedDocument!.isPinned,
+      parentId: _selectedDocument!.parentId,
+      content: _selectedDocument!.content,
+      glossary: updatedGlossary,
+    );
+    
+    _selectedDocument = updatedDocument;
+    _updateDocumentInProject(updatedDocument);
+    
+    _selectedTextForGlossary = null;
+  }
+
+  // ✅ Автоматически добавить и открыть глоссарий
+  void addAndOpenGlossary(String term) {
+    addGlossaryEntry(term);
+    _isGlossaryPanelOpen = true;
+    notifyListeners();
+  }
+
+  void updateGlossaryDefinition(String entryId, String definition) {
+    if (_selectedDocument == null) return;
+    
+    final updatedGlossary = _selectedDocument!.glossary.map((entry) {
+      if (entry.id == entryId) {
+        return GlossaryEntry(
+          id: entry.id,
+          term: entry.term,
+          definition: definition,
+          isExpanded: entry.isExpanded,
+          createdAt: entry.createdAt,
+        );
+      }
+      return entry;
+    }).toList();
+    
+    final updatedDocument = AppDocument(
+      id: _selectedDocument!.id,
+      name: _selectedDocument!.name,
+      viewCount: _selectedDocument!.viewCount,
+      isPinned: _selectedDocument!.isPinned,
+      parentId: _selectedDocument!.parentId,
+      content: _selectedDocument!.content,
+      glossary: updatedGlossary,
+    );
+    
+    _selectedDocument = updatedDocument;
+    _updateDocumentInProject(updatedDocument);
+  }
+
+  void toggleGlossaryEntry(String entryId) {
+    if (_selectedDocument == null) return;
+    
+    final updatedGlossary = _selectedDocument!.glossary.map((entry) {
+      if (entry.id == entryId) {
+        return GlossaryEntry(
+          id: entry.id,
+          term: entry.term,
+          definition: entry.definition,
+          isExpanded: !entry.isExpanded,
+          createdAt: entry.createdAt,
+        );
+      }
+      return entry;
+    }).toList();
+    
+    final updatedDocument = AppDocument(
+      id: _selectedDocument!.id,
+      name: _selectedDocument!.name,
+      viewCount: _selectedDocument!.viewCount,
+      isPinned: _selectedDocument!.isPinned,
+      parentId: _selectedDocument!.parentId,
+      content: _selectedDocument!.content,
+      glossary: updatedGlossary,
+    );
+    
+    _selectedDocument = updatedDocument;
+    _updateDocumentInProject(updatedDocument);
+  }
+
+  void deleteGlossaryEntry(String entryId) {
+    if (_selectedDocument == null) return;
+    
+    final updatedGlossary = _selectedDocument!.glossary
+        .where((entry) => entry.id != entryId)
+        .toList();
+    
+    final updatedDocument = AppDocument(
+      id: _selectedDocument!.id,
+      name: _selectedDocument!.name,
+      viewCount: _selectedDocument!.viewCount,
+      isPinned: _selectedDocument!.isPinned,
+      parentId: _selectedDocument!.parentId,
+      content: _selectedDocument!.content,
+      glossary: updatedGlossary,
+    );
+    
+    _selectedDocument = updatedDocument;
+    _updateDocumentInProject(updatedDocument);
   }
 
   void incrementViewCount(AppDocument doc) {
@@ -143,41 +309,34 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Закрепить/открепить документ
   void toggleDocumentPin(AppDocument doc) {
     doc.isPinned = !doc.isPinned;
     notifyListeners();
   }
 
-  // ✅ В классе AppState добавьте этот метод:
-void reorderPinnedDocuments(int oldIndex, int newIndex) {
-  if (_selectedProject == null) return;
-  
-  final pinnedDocs = _selectedProject!.pinnedDocuments;
-  if (newIndex > oldIndex) newIndex -= 1;
-  
-  final doc = pinnedDocs.removeAt(oldIndex);
-  final targetDoc = pinnedDocs[newIndex];
-  
-  // Находим индексы в основном списке
-  final docMainIndex = _selectedProject!.documents.indexOf(doc);
-  final targetMainIndex = _selectedProject!.documents.indexOf(targetDoc);
-  
-  // Перемещаем в основном списке
-  _selectedProject!.documents.removeAt(docMainIndex);
-  _selectedProject!.documents.insert(targetMainIndex, doc);
-  
-  notifyListeners();
-}
+  void reorderPinnedDocuments(int oldIndex, int newIndex) {
+    if (_selectedProject == null) return;
+    
+    final pinnedDocs = _selectedProject!.pinnedDocuments;
+    if (newIndex > oldIndex) newIndex -= 1;
+    
+    final doc = pinnedDocs.removeAt(oldIndex);
+    final targetDoc = pinnedDocs[newIndex];
+    
+    final docMainIndex = _selectedProject!.documents.indexOf(doc);
+    final targetMainIndex = _selectedProject!.documents.indexOf(targetDoc);
+    
+    _selectedProject!.documents.removeAt(docMainIndex);
+    _selectedProject!.documents.insert(targetMainIndex, doc);
+    
+    notifyListeners();
+  }
 
-  // ✅ Удалить документ
   void deleteDocument(AppDocument doc) {
     if (_selectedProject == null) return;
     
-    // ✅ Сначала удаляем документ из проекта
     _selectedProject!.documents.remove(doc);
     
-    // ✅ Затем закрываем редакторы, если они используют этот документ
     if (_selectedDocument?.id == doc.id) {
       _selectedDocument = null;
     }
@@ -185,7 +344,6 @@ void reorderPinnedDocuments(int oldIndex, int newIndex) {
       _secondSelectedDocument = null;
     }
     
-    // ✅ И только потом уведомляем слушателей
     notifyListeners();
   }
 
@@ -222,23 +380,25 @@ void reorderPinnedDocuments(int oldIndex, int newIndex) {
     } else {
       _selectedDocument = null;
     }
+    _isGlossaryPanelOpen = false;
+    _selectedTextForGlossary = null;
     notifyListeners();
   }
 
   void selectDocument(AppDocument document) {
     _selectedDocument = document;
     incrementViewCount(document);
+    _isGlossaryPanelOpen = false;
+    _selectedTextForGlossary = null;
     notifyListeners();
   }
 
-  // ✅ Открыть документ во втором редакторе
   void selectSecondDocument(AppDocument document) {
     _secondSelectedDocument = document;
     incrementViewCount(document);
     notifyListeners();
   }
 
-  // ✅ Закрыть второй редактор
   void closeSecondEditor() {
     _secondSelectedDocument = null;
     notifyListeners();
@@ -248,6 +408,8 @@ void reorderPinnedDocuments(int oldIndex, int newIndex) {
     _selectedProject = null;
     _selectedDocument = null;
     _secondSelectedDocument = null;
+    _isGlossaryPanelOpen = false;
+    _selectedTextForGlossary = null;
     notifyListeners();
   }
 
@@ -294,6 +456,27 @@ void reorderPinnedDocuments(int oldIndex, int newIndex) {
   void dispose() {
     super.dispose();
   }
+
+  String? getSelectedTextFromController(quill.QuillController? controller) {
+  if (controller == null) return null;
+  
+  final selection = controller.selection;
+  if (selection.isCollapsed) return null;
+  
+  final text = controller.document.toPlainText();
+  if (selection.baseOffset >= text.length || selection.extentOffset >= text.length) return null;
+  
+  final start = selection.baseOffset < selection.extentOffset 
+      ? selection.baseOffset 
+      : selection.extentOffset;
+  final end = selection.baseOffset < selection.extentOffset 
+      ? selection.extentOffset 
+      : selection.baseOffset;
+  
+  final selectedText = text.substring(start, end);
+  
+  return selectedText.trim().isNotEmpty ? selectedText.trim() : null;
+}
 }
 
 // ==================== APP ====================
@@ -695,12 +878,13 @@ class ProjectWorkspace extends StatelessWidget {
   final borderColor = state.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
   
   final showTwoEditors = state.secondSelectedDocument != null;
-  final isPanelCollapsed = state.isSidePanelCollapsed;  // ✅ Получаем состояние
+  final isPanelCollapsed = state.isSidePanelCollapsed;
+  final isGlossaryOpen = state.isGlossaryPanelOpen;
   
   return Scaffold(
     body: Row(
       children: [
-        // ✅ Боковая панель с анимацией сворачивания
+        // ✅ Левая панель (сворачиваемая)
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
@@ -717,17 +901,8 @@ class ProjectWorkspace extends StatelessWidget {
                       color: headerBg,
                       child: Row(
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back),
-                            onPressed: () => state.clearSelectedProject(),
-                            tooltip: 'Back to projects',
-                          ),
-                          Expanded(
-                            child: Text(
-                              state.selectedProject!.name,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: textColor),
-                            ),
-                          ),
+                          IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => state.clearSelectedProject(), tooltip: 'Back to projects'),
+                          Expanded(child: Text(state.selectedProject!.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: textColor))),
                         ],
                       ),
                     ),
@@ -769,49 +944,113 @@ class ProjectWorkspace extends StatelessWidget {
                 ),
         ),
         
-        // ✅ Кнопка-вкладка для сворачивания/разворачивания
+        // ✅ Кнопка сворачивания левой панели
         Container(
-            width: 24,
-            decoration: BoxDecoration(
-              color: isPanelCollapsed ? (state.isDarkMode ? Colors.grey[800] : Colors.grey[200]) : Colors.transparent,
-              border: Border(right: BorderSide(color: borderColor)),
-            ),
-            child: Column(
-              children: [
-                // ✅ Регулируйте высоту верхнего отступа
-                const SizedBox(height: 100),  // Было: Spacer()
-                
-                // ✅ Кнопка сворачивания/разворачивания
-                GestureDetector(
-                  onTap: () => state.toggleSidePanel(),
-                  child: Container(
-                    width: 24,
-                    height: 82,
-                    decoration: BoxDecoration(
-                      color: state.isDarkMode ? Colors.grey[700] : Colors.grey[300],
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    child: Icon(
-                      isPanelCollapsed ? Icons.chevron_right : Icons.chevron_left,
-                      size: 20,
-                      color: textColor,
-                    ),
+          width: 24,
+          decoration: BoxDecoration(
+            color: isPanelCollapsed ? (state.isDarkMode ? Colors.grey[800] : Colors.grey[200]) : Colors.transparent,
+            border: Border(right: BorderSide(color: borderColor)),
+          ),
+          child: Column(
+            children: [
+              // ✅ Регулируйте высоту верхнего отступа (100px от верха)
+              const SizedBox(height: 100),  // ← Меняйте это значение
+              
+              // ✅ Кнопка сворачивания/разворачивания
+              GestureDetector(
+                onTap: () => state.toggleSidePanel(),
+                child: Container(
+                  width: 24,
+                  height: 82,
+                  decoration: BoxDecoration(
+                    color: state.isDarkMode ? Colors.grey[700] : Colors.grey[300],
+                  ),
+                  child: Icon(
+                    isPanelCollapsed ? Icons.chevron_right : Icons.chevron_left,
+                    size: 20,
+                    color: textColor,
                   ),
                 ),
-                
-                // ✅ Оставшееся пространство
-                const Expanded(child: SizedBox()),  // Было: Spacer()
-              ],
+              ),
+              
+              // ✅ Оставшееся пространство
+              const Expanded(child: SizedBox()),  // Было: Spacer()
+            ],
+          ),
+        ),
+        
+        // ✅ Редакторы
+        // ✅ Редакторы
+Expanded(
+  child: showTwoEditors
+      ? _buildTwoEditorsLayout(context, state, borderColor, textColor)
+      : _buildSingleEditorLayout(context, selectedDocument, state, textColor),
+),
+
+// ✅ Панель глоссария + вкладка слева
+if (isGlossaryOpen) ...[
+  // ✅ Вкладка для ЗАКРЫТИЯ глоссария (слева от панели)
+  Container(
+    width: 24,
+    decoration: BoxDecoration(
+      color: state.isDarkMode ? Colors.grey[800] : Colors.grey[200],
+      border: Border(right: BorderSide(color: borderColor)),
+    ),
+    child: Column(
+      children: [
+        const SizedBox(height: 100),
+        GestureDetector(
+          onTap: () => state.toggleGlossaryPanel(),
+          child: Container(
+            width: 24,
+            height: 82,
+            decoration: BoxDecoration(
+              color: state.isDarkMode ? Colors.grey[700] : Colors.grey[300],
+            ),
+            child: Icon(
+              Icons.chevron_right,  // Стрелка вправо = закрыть панель
+              size: 20,
+              color: textColor,
             ),
           ),
-        
-        // ✅ Редакторы занимают всё оставшееся пространство
-        Expanded(
-          child: showTwoEditors
-              ? _buildTwoEditorsLayout(context, state, borderColor, textColor)
-              : _buildSingleEditorLayout(context, selectedDocument, state, textColor),
         ),
+        const Expanded(child: SizedBox()),
       ],
+    ),
+  ),
+  // ✅ Панель глоссария
+  const _GlossaryPanel(),
+] else
+  // ✅ Вкладка для ОТКРЫТИЯ глоссария (слева, когда панель закрыта)
+  Container(
+    width: 24,
+    decoration: BoxDecoration(
+      color: state.isDarkMode ? Colors.grey[800] : Colors.grey[200],
+      border: Border(right: BorderSide(color: borderColor)),
+    ),
+    child: Column(
+      children: [
+        const SizedBox(height: 100),
+        GestureDetector(
+          onTap: () => state.toggleGlossaryPanel(),
+          child: Container(
+            width: 24,
+            height: 82,
+            decoration: BoxDecoration(
+              color: state.isDarkMode ? Colors.blue[700] : Colors.blue[300],
+            ),
+            child: const Icon(
+              Icons.chevron_left,  // Стрелка влево = открыть панель
+              size: 20,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        const Expanded(child: SizedBox()),
+      ],
+    ),
+  ),
+        ],
     ),
     floatingActionButton: Selector<AppState, bool>(
       selector: (_, state) => state.isGraphView,
@@ -834,7 +1073,6 @@ class ProjectWorkspace extends StatelessWidget {
   );
 }
 
-  // ✅ Макет с одним редактором (с toolbar)
   Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocument, AppState state, Color textColor) {
     final project = state.selectedProject;
     final hasDocuments = project != null && project.documents.isNotEmpty;
@@ -874,10 +1112,8 @@ class ProjectWorkspace extends StatelessWidget {
       );
     }
 
-    // ✅ Редактор с toolbar
     return Column(
       children: [
-        // Toolbar первого редактора
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           color: state.isDarkMode ? Colors.grey[850] : Colors.grey[100],
@@ -900,7 +1136,6 @@ class ProjectWorkspace extends StatelessWidget {
             ],
           ),
         ),
-        // Контент редактора
         Expanded(
           child: QuillEditorView(document: selectedDocument, editorIndex: 1),
         ),
@@ -908,15 +1143,12 @@ class ProjectWorkspace extends StatelessWidget {
     );
   }
 
-  // ✅ Макет с двумя редакторами
   Widget _buildTwoEditorsLayout(BuildContext context, AppState state, Color borderColor, Color textColor) {
     return Row(
       children: [
-        // ✅ Первый редактор (50% ширины) с toolbar
         Expanded(
           child: Column(
             children: [
-              // Toolbar первого редактора
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 color: state.isDarkMode ? Colors.grey[850] : Colors.grey[100],
@@ -939,7 +1171,6 @@ class ProjectWorkspace extends StatelessWidget {
                   ],
                 ),
               ),
-              // Контент первого редактора
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(border: Border(right: BorderSide(color: borderColor))),
@@ -951,7 +1182,6 @@ class ProjectWorkspace extends StatelessWidget {
             ],
           ),
         ),
-        // ✅ Второй редактор (50% ширины) с toolbar
         Expanded(
           child: Column(
             children: [
@@ -1045,6 +1275,258 @@ class ProjectWorkspace extends StatelessWidget {
   }
 }
 
+// ==================== ПАНЕЛЬ ГЛОССАРИЯ ====================
+class _GlossaryPanel extends StatelessWidget {
+  const _GlossaryPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+    final document = state.selectedDocument;
+    final isDarkMode = state.isDarkMode;
+    final textColor = isDarkMode ? Colors.white : Colors.black87;
+    final borderColor = isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
+
+    if (document == null) {
+      return Container(
+        width: 300,
+        color: isDarkMode ? Colors.grey[900] : Colors.grey[50],
+        child: const Center(child: Text('Выберите документ')),
+      );
+    }
+
+    return Container(
+      width: 300,
+      decoration: BoxDecoration(
+        border: Border(left: BorderSide(color: borderColor)),
+        color: isDarkMode ? Colors.grey[900] : Colors.grey[50],
+      ),
+      child: Column(
+        children: [
+          // ✅ Заголовок глоссария — название документа, БЕЗ крестика
+          Container(
+            padding: const EdgeInsets.all(12),
+            color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+            child: Row(
+              children: [
+                const Icon(Icons.book, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    document.name,  // ✅ Название документа
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                // ❌ Крестик убран — закрытие только через вкладку справа
+              ],
+            ),
+          ),
+
+          // ✅ Кнопка добавления записи (если есть выделенный текст)
+          if (state.selectedTextForGlossary != null)
+            Container(
+              padding: const EdgeInsets.all(8),
+              color: isDarkMode ? Colors.green[900]!.withOpacity(0.3) : Colors.green[50],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Выделенный текст:',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isDarkMode ? Colors.grey[800] : Colors.white,
+                      border: Border.all(color: Colors.green[700]!),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      state.selectedTextForGlossary!,
+                      style: TextStyle(color: textColor),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => state.addGlossaryEntry(state.selectedTextForGlossary!),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Добавить в глоссарий'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green[700],
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // ✅ Список записей глоссария
+          Expanded(
+            child: document.glossary.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.book_outlined, size: 48, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Глоссарий пуст',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Выделите текст и свайпните влево',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: document.glossary.length,
+                    itemBuilder: (context, index) {
+                      final entry = document.glossary[index];
+                      return _GlossaryEntryTile(
+                        entry: entry,
+                        isDarkMode: isDarkMode,
+                        textColor: textColor,
+                        borderColor: borderColor,
+                        onUpdateDefinition: (definition) => 
+                            state.updateGlossaryDefinition(entry.id, definition),
+                        onToggleExpand: () => state.toggleGlossaryEntry(entry.id),
+                        onDelete: () => state.deleteGlossaryEntry(entry.id),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GlossaryEntryTile extends StatefulWidget {
+  final GlossaryEntry entry;
+  final bool isDarkMode;
+  final Color textColor;
+  final Color borderColor;
+  final Function(String) onUpdateDefinition;
+  final VoidCallback onToggleExpand;
+  final VoidCallback onDelete;
+
+  const _GlossaryEntryTile({
+    required this.entry,
+    required this.isDarkMode,
+    required this.textColor,
+    required this.borderColor,
+    required this.onUpdateDefinition,
+    required this.onToggleExpand,
+    required this.onDelete,
+  });
+
+  @override
+  State<_GlossaryEntryTile> createState() => _GlossaryEntryTileState();
+}
+
+class _GlossaryEntryTileState extends State<_GlossaryEntryTile> {
+  late TextEditingController _definitionController;
+
+  @override
+  void initState() {
+    super.initState();
+    _definitionController = TextEditingController(text: widget.entry.definition);
+  }
+
+  @override
+  void dispose() {
+    _definitionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: widget.borderColor)),
+        color: widget.entry.isExpanded
+            ? (widget.isDarkMode ? Colors.blue[900]!.withOpacity(0.2) : Colors.blue[50])
+            : Colors.transparent,
+      ),
+      child: Column(
+        children: [
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            title: Row(
+              children: [
+                Icon(
+                  widget.entry.isExpanded ? Icons.arrow_drop_down : Icons.arrow_right,
+                  size: 20,
+                  color: widget.textColor,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    widget.entry.term,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  onPressed: widget.onDelete,
+                  tooltip: 'Удалить',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+            onTap: widget.onToggleExpand,
+          ),
+          if (widget.entry.isExpanded)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Определение:',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: widget.isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _definitionController,
+                    maxLines: 5,
+                    minLines: 3,
+                    style: TextStyle(color: widget.textColor),
+                    decoration: InputDecoration(
+                      hintText: 'Введите определение...',
+                      hintStyle: TextStyle(color: Colors.grey[500]),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      fillColor: widget.isDarkMode ? Colors.grey[800] : Colors.white,
+                    ),
+                    onChanged: widget.onUpdateDefinition,
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 // ==================== СПИСОК ДОКУМЕНТОВ ====================
 class _DocumentsList extends StatelessWidget {
   const _DocumentsList();
@@ -1112,7 +1594,6 @@ class _DocumentsList extends StatelessWidget {
                           onChanged: (value) => state.toggleDocumentPin(doc),
                         ),
                         const SizedBox(width: 4),
-                        // ✅ Кнопка меню для удаления
                         IconButton(
                           icon: const Icon(Icons.more_vert, size: 20),
                           onPressed: () => _showDeleteMenu(context, doc),
@@ -1126,7 +1607,6 @@ class _DocumentsList extends StatelessWidget {
                         ),
                       ],
                     ),
-                    // ✅ Долгое нажатие → сразу второй редактор
                     onTap: () => state.selectDocument(doc),
                     onLongPress: () => state.selectSecondDocument(doc),
                   ),
@@ -1236,7 +1716,6 @@ class _DocumentsList extends StatelessWidget {
                   const SizedBox(width: 4),
                   if (doc.parentId != null)
                     Icon(Icons.swipe, size: 16, color: Colors.grey[500]),
-                  // ✅ Кнопка меню для удаления
                   IconButton(
                     icon: const Icon(Icons.more_vert, size: 20),
                     onPressed: () => _showDeleteMenu(context, doc),
@@ -1246,7 +1725,6 @@ class _DocumentsList extends StatelessWidget {
                   ),
                 ],
               ),
-              // ✅ Долгое нажатие → сразу второй редактор
               onTap: () => state.selectDocument(doc),
               onLongPress: () => state.selectSecondDocument(doc),
             ),
@@ -1256,7 +1734,6 @@ class _DocumentsList extends StatelessWidget {
     );
   }
 
-  // ✅ Меню с опцией удаления
   void _showDeleteMenu(BuildContext context, AppDocument doc) {
     final state = context.read<AppState>();
     final isDarkMode = state.isDarkMode;
@@ -1274,7 +1751,6 @@ class _DocumentsList extends StatelessWidget {
             ],
           ),
           onTap: () {
-            // ✅ Подтверждение удаления
             showDialog(
               context: context,
               builder: (ctx) => AlertDialog(
@@ -1364,7 +1840,6 @@ class _DocumentsGraph extends StatelessWidget {
       children: [
         GestureDetector(
           onTap: () => state.selectDocument(doc),
-          // ✅ Долгое нажатие → сразу второй редактор
           onLongPress: () => state.selectSecondDocument(doc),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -1404,7 +1879,6 @@ class _DocumentsGraph extends StatelessWidget {
                     color: isDarkMode ? Colors.white : Colors.black87,
                   ),
                 ),
-                // ✅ Кнопка меню для удаления в графе
                 IconButton(
                   icon: const Icon(Icons.more_vert, size: 18),
                   onPressed: () => _showDeleteMenuInGraph(context, doc),
@@ -1443,7 +1917,6 @@ class _DocumentsGraph extends StatelessWidget {
     );
   }
 
-  // ✅ Меню с опцией удаления для графа
   void _showDeleteMenuInGraph(BuildContext context, AppDocument doc) {
     final state = context.read<AppState>();
     final isDarkMode = state.isDarkMode;
@@ -1532,46 +2005,119 @@ class _QuillEditorViewState extends State<QuillEditorView> {
 
   @override
   void dispose() {
+    _controller?.dispose();
     super.dispose();
+  }
+
+  // ✅ Получение выделенного текста
+  String? _getSelectedText() {
+    if (_controller == null) return null;
+    
+    final selection = _controller!.selection;
+    if (selection.isCollapsed) return null;
+    
+    final text = _controller!.document.toPlainText();
+    if (selection.baseOffset >= text.length || selection.extentOffset >= text.length) return null;
+    
+    final start = selection.baseOffset < selection.extentOffset 
+        ? selection.baseOffset 
+        : selection.extentOffset;
+    final end = selection.baseOffset < selection.extentOffset 
+        ? selection.extentOffset 
+        : selection.baseOffset;
+    
+    final selectedText = text.substring(start, end);
+    
+    return selectedText.trim().isNotEmpty ? selectedText.trim() : null;
+  }
+
+  // ✅ Кнопка: добавить выделенный текст и открыть глоссарий
+  void _addSelectedToGlossary() {
+    final selectedText = _getSelectedText();
+    if (selectedText != null) {
+      context.read<AppState>().addAndOpenGlossary(selectedText);
+    } else {
+      // Если нет выделения, просто открыть панель
+      context.read<AppState>().toggleGlossaryPanel();
+    }
+  }
+
+  // ✅ Свайп: просто открыть глоссарий
+  void _handleSwipeLeft() {
+    final selectedText = _getSelectedText();
+    if (selectedText != null) {
+      // Сохраняем текст для отображения в панели
+      context.read<AppState>().setSelectedTextForGlossary(selectedText);
+    }
+    context.read<AppState>().toggleGlossaryPanel();
   }
 
   @override
   Widget build(BuildContext context) {
     if (_controller == null) return const Center(child: CircularProgressIndicator());
     
-    return Column(
-      children: [
-        quill.QuillSimpleToolbar(
-          key: ValueKey('toolbar_${widget.editorIndex}_${widget.document.id}'),
-          controller: _controller!,
-          config: const quill.QuillSimpleToolbarConfig(
-            showBoldButton: true,
-            showItalicButton: true,
-            showUnderLineButton: true,
-            showStrikeThrough: true,
-            showFontSize: true,
-            showFontFamily: true,
-            showColorButton: true,
-            showBackgroundColorButton: true,
-            showAlignmentButtons: true,
-            showListNumbers: true,
-            showListBullets: true,
-            showIndent: true,
-          ),
-        ),
-        Expanded(
-          child: quill.QuillEditor(
-            key: ValueKey('editor_${widget.editorIndex}_${widget.document.id}'),
-            controller: _controller!,
-            config: quill.QuillEditorConfig(
-              placeholder: 'Начните печатать...',
-              padding: const EdgeInsets.all(16),
+    return GestureDetector(
+      onPanEnd: (details) {
+        if (details.velocity.pixelsPerSecond.dx < -500) {
+          _handleSwipeLeft();
+        }
+      },
+      child: Column(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
             ),
-            scrollController: ScrollController(),
-            focusNode: FocusNode(),
+            child: Row(
+              children: [
+                Expanded(
+                  child: quill.QuillSimpleToolbar(
+                    key: ValueKey('toolbar_${widget.editorIndex}_${widget.document.id}'),
+                    controller: _controller!,
+                    config: const quill.QuillSimpleToolbarConfig(
+                      showBoldButton: true,
+                      showItalicButton: true,
+                      showUnderLineButton: true,
+                      showStrikeThrough: true,
+                      showFontSize: true,
+                      showFontFamily: true,
+                      showColorButton: true,
+                      showBackgroundColorButton: true,
+                      showAlignmentButtons: true,
+                      showListNumbers: true,
+                      showListBullets: true,
+                      showIndent: true,
+                    ),
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border(left: BorderSide(color: Colors.grey[300]!)),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.book, size: 22),
+                    onPressed: _addSelectedToGlossary,  // ✅ Кнопка добавляет и открывает
+                    tooltip: 'Глоссарий',
+                    color: Colors.blue[700],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          Expanded(
+            child: quill.QuillEditor(
+              key: ValueKey('editor_${widget.editorIndex}_${widget.document.id}'),
+              controller: _controller!,
+              config: quill.QuillEditorConfig(
+                placeholder: 'Начните печатать...',
+                padding: const EdgeInsets.all(16),
+              ),
+              scrollController: ScrollController(),
+              focusNode: FocusNode(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1668,22 +2214,6 @@ class _MobileEditorView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(document.name), leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () {})),
       body: QuillEditorView(document: document),
-    );
-  }
-}
-
-class TestApp extends StatelessWidget {
-  const TestApp({super.key});
-  
-  @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AppState(),
-      child: MaterialApp(
-        title: 'Manyllines Test',
-        // ✅ Не используем локализации в тестах - они не инициализируются в test environment
-        home: const AppShell(),
-      ),
     );
   }
 }
