@@ -2237,3 +2237,18 @@ class _MobileEditorView extends StatelessWidget {
     );
   }
 }
+
+class TestApp extends StatelessWidget {
+  const TestApp({super.key});
+  
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => AppState(),
+      child: MaterialApp(
+        title: 'Manyllines Test',
+        home: const AppShell(),
+      ),
+    );
+  }
+}
