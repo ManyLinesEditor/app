@@ -536,175 +536,195 @@ class ProjectsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          Consumer<AppState>(
-            builder: (context, state, _) {
-              final headerBg = state.isDarkMode ? Colors.grey[850] : Colors.white;
-              final logoBg = state.isDarkMode ? Colors.grey[800] : Colors.white;
-              final borderColor = state.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
-              final logoBorderColor = state.isDarkMode ? Colors.grey[600]! : Colors.grey[400]!;
-              final textColor = state.isDarkMode ? Colors.white : Colors.black87;
-              final logoTextColor = state.isDarkMode ? Colors.white : Colors.black;
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: borderColor)), color: headerBg),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: logoBorderColor),
-                        color: logoBg,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text('Logo', style: TextStyle(fontWeight: FontWeight.bold, color: logoTextColor)),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.7,
+            maxHeight: MediaQuery.of(context).size.height * 0.9,  // ✅ Изменил на 90% высоты экрана
+          ),
+          child: Column(
+            children: [
+              Consumer<AppState>(
+                builder: (context, state, _) {
+                  final headerBg = state.isDarkMode ? Colors.grey[850] : Colors.white;
+                  final logoBg = state.isDarkMode ? Colors.grey[800] : Colors.white;
+                  final borderColor = state.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
+                  final logoBorderColor = state.isDarkMode ? Colors.grey[600]! : Colors.grey[400]!;
+                  final textColor = state.isDarkMode ? Colors.white : Colors.black87;
+                  final logoTextColor = state.isDarkMode ? Colors.white : Colors.black;
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(border: Border(bottom: BorderSide(color: borderColor)), color: headerBg),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: logoBorderColor),
+                            color: logoBg,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text('Logo', style: TextStyle(fontWeight: FontWeight.bold, color: logoTextColor)),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text('Manyllines', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: textColor))),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(child: Text('Manyllines', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: textColor))),
-                  ],
-                ),
-              );
-            },
-          ),
-          Consumer<AppState>(
-            builder: (context, state, _) {
-              final bgColor = state.isDarkMode ? Colors.green[900] : Colors.green[50];
-              final borderColor = state.isDarkMode ? const Color.fromARGB(255, 0, 47, 22) : Colors.green.shade200;
-              final textColor = state.isDarkMode ? Colors.white : Colors.black87;
-              if (state.switchableValue) {
-                return ReorderableListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: state.projects.length,
-                  onReorder: state.reorderProjects,
-                  itemBuilder: (context, index) {
-                    final project = state.projects[index];
-                    return Container(
-                      key: ValueKey(project.id),
-                      decoration: BoxDecoration(color: bgColor, border: Border(bottom: BorderSide(color: borderColor))),
-                      child: ListTile(
-                        title: Text(project.name, style: TextStyle(color: textColor)),
-                        subtitle: Text('${project.documents.length} документов', style: TextStyle(fontSize: 12, color: textColor.withOpacity(0.7))),
-                        trailing: Icon(Icons.drag_handle, color: state.isDarkMode ? Colors.white54 : Colors.grey),
-                        onTap: () => state.selectProject(project),
-                      ),
-                    );
-                  },
-                );
-              } else {
-                return Container(
-                  decoration: BoxDecoration(color: bgColor, border: Border(bottom: BorderSide(color: borderColor))),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: state.projects.length,
-                    itemBuilder: (context, index) {
-                      final project = state.projects[index];
-                      return Container(
-                        key: ValueKey(project.id),
-                        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: borderColor))),
-                        child: ListTile(
-                          title: Text(project.name, style: TextStyle(color: textColor)),
-                          subtitle: Text('${project.documents.length} документов', style: TextStyle(fontSize: 12, color: textColor.withOpacity(0.7))),
-                          onTap: () => state.selectProject(project),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              }
-            },
-          ),
-          Consumer<AppState>(
-            builder: (context, state, _) {
-              final bgColor = state.isDarkMode ? Colors.blue[900] : Colors.blue[50];
-              final borderColor = state.isDarkMode ? Colors.blue[700] : Colors.blue[200];
-              final textColor = state.isDarkMode ? Colors.white : Colors.black87;
-              final settings = state.settings;
-              if (state.switchableValue) {
-                return ReorderableListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: settings.length,
-                  onReorder: state.reorderSettings,
-                  itemBuilder: (context, index) {
-                    final setting = settings[index];
-                    final isExpanded = setting['expanded'] ?? false;
-                    return Column(
-                      key: ValueKey(setting['id']),
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: borderColor!)), color: state.isDarkMode ? Colors.blue[800] : Colors.white),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(setting['name'], style: TextStyle(color: textColor)),
-                              Row(
-                                children: [
-                                  IconButton(icon: Icon(isExpanded ? Icons.arrow_drop_down : Icons.arrow_drop_up, color: textColor), onPressed: () => state.toggleSettingExpansion(setting['id'])),
-                                  if (state.switchableValue) Icon(Icons.drag_handle, color: state.isDarkMode ? Colors.white54 : Colors.grey),
-                                ],
+                  );
+                },
+              ),
+              // ✅ Оборачиваем прокручиваемый контент
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      Consumer<AppState>(
+                        builder: (context, state, _) {
+                          final bgColor = state.isDarkMode ? Colors.green[900] : Colors.green[50];
+                          final borderColor = state.isDarkMode ? const Color.fromARGB(255, 0, 47, 22) : Colors.green.shade200;
+                          final textColor = state.isDarkMode ? Colors.white : Colors.black87;
+                          if (state.switchableValue) {
+                            return ReorderableListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: state.projects.length,
+                              onReorder: state.reorderProjects,
+                              itemBuilder: (context, index) {
+                                final project = state.projects[index];
+                                return Container(
+                                  key: ValueKey(project.id),
+                                  decoration: BoxDecoration(color: bgColor, border: Border(bottom: BorderSide(color: borderColor))),
+                                  child: ListTile(
+                                    title: Text(project.name, style: TextStyle(color: textColor)),
+                                    subtitle: Text('${project.documents.length} документов', style: TextStyle(fontSize: 12, color: textColor.withOpacity(0.7))),
+                                    trailing: Icon(Icons.drag_handle, color: state.isDarkMode ? Colors.white54 : Colors.grey),
+                                    onTap: () => state.selectProject(project),
+                                  ),
+                                );
+                              },
+                            );
+                          } else {
+                            return Container(
+                              decoration: BoxDecoration(color: bgColor, border: Border(bottom: BorderSide(color: borderColor))),
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: state.projects.length,
+                                itemBuilder: (context, index) {
+                                  final project = state.projects[index];
+                                  return Container(
+                                    key: ValueKey(project.id),
+                                    decoration: BoxDecoration(border: Border(bottom: BorderSide(color: borderColor))),
+                                    child: ListTile(
+                                      title: Text(project.name, style: TextStyle(color: textColor)),
+                                      subtitle: Text('${project.documents.length} документов', style: TextStyle(fontSize: 12, color: textColor.withOpacity(0.7))),
+                                      onTap: () => state.selectProject(project),
+                                    ),
+                                  );
+                                },
                               ),
-                            ],
-                          ),
-                        ),
-                        if (setting['id'] == 'setting1' && isExpanded) _buildDescriptionSection1(state.isDarkMode),
-                        if (setting['id'] == 'setting2' && isExpanded) _buildDescriptionSection2(state.isDarkMode),
-                        if (setting['id'] == 'setting3' && isExpanded) _buildDescriptionSection3(state.isDarkMode),
-                      ],
-                    );
-                  },
-                );
-              } else {
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: settings.length,
-                  itemBuilder: (context, index) {
-                    final setting = settings[index];
-                    final isExpanded = setting['expanded'] ?? false;
-                    return Column(
-                      key: ValueKey(setting['id']),
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: borderColor!)), color: state.isDarkMode ? Colors.blue[800] : Colors.white),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(setting['name'], style: TextStyle(color: textColor)),
-                              IconButton(icon: Icon(isExpanded ? Icons.arrow_drop_down : Icons.arrow_drop_up, color: textColor), onPressed: () => state.toggleSettingExpansion(setting['id'])),
-                            ],
-                          ),
-                        ),
-                        if (setting['id'] == 'setting1' && isExpanded) _buildDescriptionSection1(state.isDarkMode),
-                        if (setting['id'] == 'setting2' && isExpanded) _buildDescriptionSection2(state.isDarkMode),
-                        if (setting['id'] == 'setting3' && isExpanded) _buildDescriptionSection3(state.isDarkMode),
-                      ],
-                    );
-                  },
-                );
-              }
-            },
+                            );
+                          }
+                        },
+                      ),
+                      Consumer<AppState>(
+                        builder: (context, state, _) {
+                          final bgColor = state.isDarkMode ? Colors.blue[900] : Colors.blue[50];
+                          final borderColor = state.isDarkMode ? Colors.blue[700] : Colors.blue[200];
+                          final textColor = state.isDarkMode ? Colors.white : Colors.black87;
+                          final settings = state.settings;
+                          if (state.switchableValue) {
+                            return ReorderableListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: settings.length,
+                              onReorder: state.reorderSettings,
+                              itemBuilder: (context, index) {
+                                final setting = settings[index];
+                                final isExpanded = setting['expanded'] ?? false;
+                                return Column(
+                                  key: ValueKey(setting['id']),
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: borderColor!)), color: state.isDarkMode ? Colors.blue[800] : Colors.white),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(setting['name'], style: TextStyle(color: textColor)),
+                                          Row(
+                                            children: [
+                                              IconButton(icon: Icon(isExpanded ? Icons.arrow_drop_down : Icons.arrow_drop_up, color: textColor), onPressed: () => state.toggleSettingExpansion(setting['id'])),
+                                              if (state.switchableValue) Icon(Icons.drag_handle, color: state.isDarkMode ? Colors.white54 : Colors.grey),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (setting['id'] == 'setting1' && isExpanded) _buildDescriptionSection1(state.isDarkMode),
+                                    if (setting['id'] == 'setting2' && isExpanded) _buildDescriptionSection2(state.isDarkMode),
+                                    if (setting['id'] == 'setting3' && isExpanded) _buildDescriptionSection3(state.isDarkMode),
+                                  ],
+                                );
+                              },
+                            );
+                          } else {
+                            return ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: settings.length,
+                              itemBuilder: (context, index) {
+                                final setting = settings[index];
+                                final isExpanded = setting['expanded'] ?? false;
+                                return Column(
+                                  key: ValueKey(setting['id']),
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: borderColor!)), color: state.isDarkMode ? Colors.blue[800] : Colors.white),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(setting['name'], style: TextStyle(color: textColor)),
+                                          IconButton(icon: Icon(isExpanded ? Icons.arrow_drop_down : Icons.arrow_drop_up, color: textColor), onPressed: () => state.toggleSettingExpansion(setting['id'])),
+                                        ],
+                                      ),
+                                    ),
+                                    if (setting['id'] == 'setting1' && isExpanded) _buildDescriptionSection1(state.isDarkMode),
+                                    if (setting['id'] == 'setting2' && isExpanded) _buildDescriptionSection2(state.isDarkMode),
+                                    if (setting['id'] == 'setting3' && isExpanded) _buildDescriptionSection3(state.isDarkMode),
+                                  ],
+                                );
+                              },
+                            );
+                          }
+                        },
+                      ),
+                      Consumer<AppState>(
+                        builder: (context, state, _) {
+                          final bgColor = state.isDarkMode ? const Color.fromARGB(255, 6, 58, 137) : Colors.blue[50];
+                          final textColor = state.isDarkMode ? Colors.white54 : Colors.black54;
+                          return Container(
+                            color: bgColor,
+                            padding: const EdgeInsets.all(16),
+                            child: Center(child: Text('Other Settings ...', style: TextStyle(color: textColor))),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-          Consumer<AppState>(
-            builder: (context, state, _) {
-              final bgColor = state.isDarkMode ? const Color.fromARGB(255, 6, 58, 137) : Colors.blue[50];
-              final textColor = state.isDarkMode ? Colors.white54 : Colors.black54;
-              return Expanded(
-                child: Container(color: bgColor, padding: const EdgeInsets.all(16), child: Center(child: Text('Other Settings ...', style: TextStyle(color: textColor)))),
-              );
-            },
-          ),
-        ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(onPressed: () => _showCreateProjectDialog(context), child: const Icon(Icons.add)),
     );
   }
+
 
   void _showCreateProjectDialog(BuildContext context) {
     final controller = TextEditingController();
