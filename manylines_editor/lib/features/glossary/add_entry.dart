@@ -18,6 +18,6 @@ class AddGlossaryEntryFeature {
       isExpanded: true,
     );
     
-    repo.addGlossaryEntry(documentId, newEntry);
+    repo.addGlossaryEntry(documentId, term);
   }
 }

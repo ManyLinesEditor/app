@@ -29,6 +29,12 @@ class CreateDocumentFeature {
                 if (value == null || value.trim().isEmpty) return 'Введите название документа';
                 return null;
               },
+              onFieldSubmitted: (_) {
+                if (formKey.currentState!.validate()) {
+                  execute(context, controller.text.trim());
+                  Navigator.pop(context);
+                }
+              },
             ),
           ),
           actions: [
@@ -67,6 +73,7 @@ class CreateDocumentFeature {
     );
     
     projectRepo.addDocumentToProject(newDoc);
+    
     documentRepo.selectDocument(newDoc);
   }
 }

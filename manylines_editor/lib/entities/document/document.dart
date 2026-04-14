@@ -8,7 +8,7 @@ class AppDocument {
   bool isPinned;
   String? parentId;
   Delta content;
-  List<GlossaryEntry> glossary;
+  List<GlossaryEntry> glossary;  // ✅ Изменяемый список
 
   AppDocument({
     required this.id,
@@ -17,8 +17,9 @@ class AppDocument {
     this.isPinned = false,
     this.parentId,
     required this.content,
-    this.glossary = const [],
-  });
+    List<GlossaryEntry>? glossary,  // ✅ Изменили на nullable
+  }) : glossary = glossary ?? [];  // ✅ Создаём mutable список
+
 
   bool get isChild => parentId != null;
 }

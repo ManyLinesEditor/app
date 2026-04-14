@@ -11,11 +11,16 @@ class AppProviders extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final projectRepo = ProjectRepository();
+    final documentRepo = DocumentRepository(projectRepo);
+    final settingRepo = SettingRepository();
+    
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ProjectRepository()),
-        ChangeNotifierProvider(create: (_) => DocumentRepository()),
-        ChangeNotifierProvider(create: (_) => SettingRepository()),
+        ChangeNotifierProvider.value(value: projectRepo),
+        ChangeNotifierProvider.value(value: documentRepo),
+        ChangeNotifierProvider.value(value: settingRepo),
       ],
       child: child,
     );

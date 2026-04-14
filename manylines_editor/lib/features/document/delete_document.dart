@@ -35,10 +35,12 @@ class DeleteDocumentFeature {
   }
 
   static void execute(BuildContext context, AppDocument doc) {
-    final projectRepo = Provider.of<ProjectRepository>(context, listen: false);
-    final documentRepo = Provider.of<DocumentRepository>(context, listen: false);
-    
-    projectRepo.deleteDocument(doc);
-    documentRepo.closeEditorIfOpen(doc.id);
-  }
+  final projectRepo = Provider.of<ProjectRepository>(context, listen: false);
+  final documentRepo = Provider.of<DocumentRepository>(context, listen: false);
+  
+  documentRepo.deleteDocumentControllers(doc.id);
+  
+  projectRepo.deleteDocument(doc);
+  documentRepo.closeEditorIfOpen(doc.id);
+}
 }

@@ -12,8 +12,8 @@ class SettingsList extends StatelessWidget {
   Widget build(BuildContext context) {
     final settingState = context.watch<SettingRepository>();
     final isDarkMode = settingState.isDarkMode;
-    final bgColor = isDarkMode ? Colors.blue[900]! : Colors.blue[50]!;  // ✅ Добавьте !
-    final borderColor = isDarkMode ? Colors.blue[700]! : Colors.blue[200]!;  // ✅ Добавьте !
+    final bgColor = isDarkMode ? Colors.blue[900]! : Colors.blue[50]!;
+    final borderColor = isDarkMode ? Colors.blue[700]! : Colors.blue[200]!;
     final textColor = isDarkMode ? Colors.white : Colors.black87;
 
     if (settingState.switchableValue) {

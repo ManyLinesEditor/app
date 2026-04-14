@@ -41,20 +41,43 @@ class ProjectRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  void reorderPinnedDocuments(int oldIndex, int newIndex) {
+    if (_selectedProject == null) return;
+    
+    final pinnedDocs = _selectedProject!.pinnedDocuments;
+    if (newIndex > oldIndex) newIndex -= 1;
+    
+    final doc = pinnedDocs.removeAt(oldIndex);
+    final targetDoc = pinnedDocs[newIndex];
+    
+    final docMainIndex = _selectedProject!.documents.indexOf(doc);
+    final targetMainIndex = _selectedProject!.documents.indexOf(targetDoc);
+    
+    _selectedProject!.documents.removeAt(docMainIndex);
+    _selectedProject!.documents.insert(targetMainIndex, doc);
+    
+    notifyListeners();
+  }
+
   void toggleViewMode() {
     _isGraphView = !_isGraphView;
     notifyListeners();
   }
 
   void addDocumentToProject(AppDocument document) {
-    if (_selectedProject == null) return;
-    _selectedProject!.documents.add(document);
-    notifyListeners();
-  }
+  if (_selectedProject == null) return;
+  _selectedProject!.documents.add(document);
+  notifyListeners();
+}
 
   void deleteDocument(AppDocument doc) {
     if (_selectedProject == null) return;
     _selectedProject!.documents.remove(doc);
     notifyListeners();
   }
+
+  void togglePin(AppDocument doc) {
+  doc.isPinned = !doc.isPinned;
+  notifyListeners();  // ✅ Уведомляем о изменении
+}
 }

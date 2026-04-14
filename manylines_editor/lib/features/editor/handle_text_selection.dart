@@ -23,7 +23,7 @@ class HandleTextSelectionFeature {
     if (selectedText.trim().isNotEmpty) {
       final repo = Provider.of<DocumentRepository>(context, listen: false);
       repo.setSelectedTextForGlossary(selectedText.trim());
-      repo.toggleGlossaryPanel();
+      repo.openGlossaryPanel();
     }
   }
 }

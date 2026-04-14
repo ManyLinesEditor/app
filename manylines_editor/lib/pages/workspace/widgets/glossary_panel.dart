@@ -39,9 +39,7 @@ class GlossaryPanel extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _buildHeader(document.name, textColor, context),
-          if (documentState.selectedTextForGlossary != null)
-            _buildAddEntrySection(documentState.selectedTextForGlossary!, textColor, isDarkMode, context),
+          _buildHeader(document.name, textColor, isDarkMode, context),
           Expanded(
             child: document.glossary.isEmpty
                 ? _buildEmptyState(isDarkMode)
@@ -67,10 +65,10 @@ class GlossaryPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(String documentName, Color textColor, BuildContext context) {
+  Widget _buildHeader(String documentName, Color textColor, bool isDarkMode, BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
-      color: context.watch<SettingRepository>().isDarkMode ? Colors.grey[800] : Colors.grey[200],
+      color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
       child: Row(
         children: [
           const Icon(Icons.book, size: 20),
@@ -80,44 +78,6 @@ class GlossaryPanel extends StatelessWidget {
               documentName,
               style: const TextStyle(fontWeight: FontWeight.bold),
               overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAddEntrySection(
-    String selectedText, Color textColor, bool isDarkMode, BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      color: isDarkMode ? Colors.green[900]!.withOpacity(0.3) : Colors.green[50],
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Выделенный текст:', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isDarkMode ? Colors.grey[800] : Colors.white,
-              border: Border.all(color: Colors.green[700]!),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(selectedText, style: TextStyle(color: textColor)),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => AddGlossaryEntryFeature.execute(
-                context, selectedText, context.watch<DocumentRepository>().selectedDocument!.id),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Добавить в глоссарий'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green[700],
-                foregroundColor: Colors.white,
-              ),
             ),
           ),
         ],
@@ -135,7 +95,7 @@ class GlossaryPanel extends StatelessWidget {
           Text('Глоссарий пуст', style: TextStyle(color: Colors.grey[600])),
           const SizedBox(height: 8),
           Text(
-            'Выделите текст и свайпните влево',
+            'Выделите текст и нажмите кнопку 📖',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: Colors.grey[500]),
           ),
@@ -144,3 +104,49 @@ class GlossaryPanel extends StatelessWidget {
     );
   }
 }
+
+  Widget _buildAddEntrySection(
+    String selectedText, 
+    Color textColor, 
+    bool isDarkMode, 
+    String documentId,
+    BuildContext context,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      color: isDarkMode ? Colors.blue[900]!.withOpacity(0.3) : Colors.blue[50],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Выделенный текст:', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.grey[800] : Colors.white,
+              border: Border.all(color: Colors.blue[700]!),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(selectedText, style: TextStyle(color: textColor)),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => AddGlossaryEntryFeature.execute(
+                context,
+                selectedText, 
+                documentId,
+              ),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Добавить в глоссарий'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue[700],
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }

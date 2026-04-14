@@ -1,3 +1,5 @@
+// lib/pages/workspace/widgets/glossary_entry_tile.dart
+
 import 'package:flutter/material.dart';
 import '../../../entities/glossary_entry/glossary_entry.dart';
 
@@ -31,7 +33,18 @@ class _GlossaryEntryTileState extends State<GlossaryEntryTile> {
   @override
   void initState() {
     super.initState();
+    // ✅ Создаём контроллер с текущим определением
     _definitionController = TextEditingController(text: widget.entry.definition);
+  }
+
+  @override
+  void didUpdateWidget(GlossaryEntryTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // ✅ Обновляем контроллер если entry изменился
+    if (oldWidget.entry.id != widget.entry.id || 
+        oldWidget.entry.definition != widget.entry.definition) {
+      _definitionController.text = widget.entry.definition;
+    }
   }
 
   @override
@@ -102,7 +115,9 @@ class _GlossaryEntryTileState extends State<GlossaryEntryTile> {
                     decoration: InputDecoration(
                       hintText: 'Введите определение...',
                       hintStyle: TextStyle(color: Colors.grey[500]),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       filled: true,
                       fillColor: widget.isDarkMode ? Colors.grey[800] : Colors.white,
                     ),

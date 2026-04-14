@@ -12,13 +12,13 @@ class EditorArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final projectState = context.watch<ProjectRepository>();
     final documentState = context.watch<DocumentRepository>();
+    final settingState = context.watch<SettingRepository>();
     
     final showTwoEditors = documentState.secondSelectedDocument != null;
-    final borderColor = context.watch<SettingRepository>().isDarkMode 
+    final borderColor = settingState.isDarkMode 
         ? Colors.grey[700]! : Colors.grey[300]!;
-    final textColor = context.watch<SettingRepository>().isDarkMode 
+    final textColor = settingState.isDarkMode 
         ? Colors.white : Colors.black87;
 
     if (showTwoEditors) {
@@ -71,7 +71,7 @@ class EditorArea extends StatelessWidget {
         ),
         Expanded(
           child: QuillEditorWrapper(
-            documentId: selectedDocument.id,
+            document: selectedDocument,
             editorIndex: 1,
           ),
         ),
@@ -95,7 +95,7 @@ class EditorArea extends StatelessWidget {
                   ),
                   child: documentState.selectedDocument != null
                       ? QuillEditorWrapper(
-                          documentId: documentState.selectedDocument!.id,
+                          document: documentState.selectedDocument!,
                           editorIndex: 1,
                         )
                       : Center(child: Text('Выберите документ', style: TextStyle(color: textColor))),
@@ -111,7 +111,7 @@ class EditorArea extends StatelessWidget {
               Expanded(
                 child: documentState.secondSelectedDocument != null
                     ? QuillEditorWrapper(
-                        documentId: documentState.secondSelectedDocument!.id,
+                        document: documentState.secondSelectedDocument!,
                         editorIndex: 2,
                       )
                     : Center(child: Text('Выберите документ', style: TextStyle(color: textColor))),
