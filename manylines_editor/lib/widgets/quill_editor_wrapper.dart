@@ -5,6 +5,8 @@ import '../entities/document/document.dart';
 import '../entities/document/document_repository.dart';
 import '../entities/glossary_entry/glossary_entry.dart';
 import '../features/editor/handle_text_selection.dart';
+import '../entities/project/project_repository.dart';
+import '../entities/document/document_repository.dart';
 
 class QuillEditorWrapper extends StatefulWidget {
   final AppDocument document;
@@ -44,23 +46,12 @@ class _QuillEditorWrapperState extends State<QuillEditorWrapper> {
   }
 
   void _addSelectedToGlossary() {
-  print('🔍 _addSelectedToGlossary вызван');
-  
   final selectedText = _getSelectedText();
-  print('🔍 Выделенный текст: $selectedText');
-  
   if (selectedText != null) {
-    print('🔍 Добавляем термин: $selectedText');
-    print('🔍 Document ID: ${widget.document.id}');
-    
-    final repo = context.read<DocumentRepository>();
-    repo.addGlossaryEntry(widget.document.id, selectedText);
-    
-    print('✅ Термин добавлен');
-    print('Открываем Глоссарий');
-    repo.openGlossaryPanel();
-  } else {
-    print('❌ Текст не выделен');
+    final projectRepo = context.read<ProjectRepository>();
+    // ✅ Добавляем в глоссарий проекта
+    projectRepo.addGlossaryEntry(selectedText, '');  // Пустое определение — пользователь заполнит
+    projectRepo.openGlossaryPanel();
   }
 }
 

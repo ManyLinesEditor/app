@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../entities/document/document_repository.dart';
+import '../../../entities/glossary_entry/glossary_entry.dart';
 import '../../../entities/project/project_repository.dart';
 import '../../../entities/setting/setting_repository.dart';
 import '../../../features/glossary/add_entry.dart';
@@ -12,22 +13,24 @@ import 'glossary_entry_tile.dart';
 class GlossaryPanel extends StatelessWidget {
   const GlossaryPanel({super.key});
 
+// lib/pages/workspace/widgets/glossary_panel.dart
+
   @override
   Widget build(BuildContext context) {
-    final documentState = context.watch<DocumentRepository>();
-    final projectState = context.watch<ProjectRepository>();
+    final projectState = context.watch<ProjectRepository>();  // ✅ Из ProjectRepository
     final settingState = context.watch<SettingRepository>();
     
-    final document = documentState.selectedDocument;
+    final project = projectState.selectedProject;  // ✅ Проект
+    final glossary = project?.glossary ?? [];  // ✅ Глоссарий проекта
     final isDarkMode = settingState.isDarkMode;
     final textColor = isDarkMode ? Colors.white : Colors.black87;
     final borderColor = isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
 
-    if (document == null) {
+    if (project == null) {
       return Container(
         width: 300,
         color: isDarkMode ? Colors.grey[900] : Colors.grey[50],
-        child: const Center(child: Text('Выберите документ')),
+        child: const Center(child: Text('Выберите проект')),
       );
     }
 
@@ -39,23 +42,26 @@ class GlossaryPanel extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _buildHeader(document.name, textColor, isDarkMode, context),
+          _buildHeader(project.name, textColor, isDarkMode, context),
           Expanded(
-            child: document.glossary.isEmpty
+            child: glossary.isEmpty
                 ? _buildEmptyState(isDarkMode)
                 : ListView.builder(
-                    itemCount: document.glossary.length,
+                    itemCount: glossary.length,
                     itemBuilder: (context, index) {
-                      final entry = document.glossary[index];
+                      final entry = glossary[index];
                       return GlossaryEntryTile(
                         entry: entry,
                         isDarkMode: isDarkMode,
                         textColor: textColor,
                         borderColor: borderColor,
-                        onUpdateDefinition: (definition) => 
-                            EditGlossaryEntryFeature.execute(context, entry.id, definition),
-                        onToggleExpand: () => ToggleGlossaryEntryFeature.execute(context, entry.id),
-                        onDelete: () => DeleteGlossaryEntryFeature.execute(context, entry.id),
+                        onUpdateDefinition: (defId, definition) => 
+                            projectState.updateGlossaryDefinition(defId, definition),
+                        onToggleDefinition: (defId) => 
+                            projectState.toggleGlossaryDefinition(defId),
+                        onDeleteDefinition: (entryId, defId) => 
+                            projectState.deleteGlossaryDefinition(entryId, defId),
+                        onToggleExpand: () => projectState.toggleGlossaryEntry(entry.id),
                       );
                     },
                   ),

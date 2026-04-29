@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../entities/project/project_repository.dart';
 
-class ToggleGlossaryEntryFeature {
+class ToggleGlossaryDefinitionFeature {
   static void execute(
     BuildContext context, 
-    String entryId,
+    String definitionId,
   ) {
     // ✅ Используем ProjectRepository
     final repo = Provider.of<ProjectRepository>(context, listen: false);
     
-    // ✅ Переключаем раскрытие термина (accordion)
-    repo.toggleGlossaryEntry(entryId);
+    // ✅ Переключаем активное определение (radio button)
+    repo.toggleGlossaryDefinition(definitionId);
   }
 }

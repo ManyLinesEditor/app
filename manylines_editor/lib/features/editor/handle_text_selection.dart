@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:provider/provider.dart';
 import '../../entities/document/document_repository.dart';
+import '../../entities/project/project_repository.dart';
 
 class HandleTextSelectionFeature {
   static void execute(BuildContext context, quill.QuillController? controller) {
@@ -21,9 +22,13 @@ class HandleTextSelectionFeature {
     final selectedText = text.substring(start, end);
     
     if (selectedText.trim().isNotEmpty) {
-      final repo = Provider.of<DocumentRepository>(context, listen: false);
-      repo.setSelectedTextForGlossary(selectedText.trim());
-      repo.openGlossaryPanel();
+      // ✅ Сохраняем выделенный текст в DocumentRepository
+      final documentRepo = Provider.of<DocumentRepository>(context, listen: false);
+      documentRepo.setSelectedTextForGlossary(selectedText.trim());
+      
+      // ✅ Открываем панель глоссария через ProjectRepository
+      final projectRepo = Provider.of<ProjectRepository>(context, listen: false);
+      projectRepo.openGlossaryPanel();
     }
   }
 }

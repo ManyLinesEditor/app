@@ -1,15 +1,28 @@
 class GlossaryEntry {
   final String id;
   final String term;
-  String definition;
+  List<GlossaryDefinition> definitions;
   bool isExpanded;
   DateTime createdAt;
 
   GlossaryEntry({
     required this.id,
     required this.term,
-    this.definition = '',
+    List<GlossaryDefinition>? definitions,
     this.isExpanded = false,
     DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+  }) : definitions = definitions ?? [],
+       createdAt = createdAt ?? DateTime.now();
+}
+
+class GlossaryDefinition {
+  final String id;
+  String text;
+  bool isActive;
+
+  GlossaryDefinition({
+    required this.id,
+    required this.text,
+    this.isActive = false,
+  });
 }

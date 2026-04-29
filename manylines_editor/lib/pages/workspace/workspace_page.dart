@@ -36,7 +36,7 @@ class _MobileWorkspace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final documentState = context.watch<DocumentRepository>();
+    final documentState = context.watch<DocumentRepository>();  // ✅ Исправлено
     final document = documentState.selectedDocument;
     
     if (document == null) {
@@ -80,9 +80,11 @@ class _MobileEmptyState extends StatelessWidget {
   }
 }
 
+// ✅ Основная функция построения десктоп-лейаута
 Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) {
   final settingState = context.watch<SettingRepository>();
   final documentState = context.watch<DocumentRepository>();
+  final projectState = context.watch<ProjectRepository>();  // ✅ Добавлено
   
   final leftPanelBg = settingState.isDarkMode ? Colors.grey[900] : Colors.white;
   final headerBg = settingState.isDarkMode ? Colors.green[900] : Colors.green[50];
@@ -91,11 +93,12 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
   
   final showTwoEditors = documentState.secondSelectedDocument != null;
   final isPanelCollapsed = settingState.isSidePanelCollapsed;
-  final isGlossaryOpen = documentState.isGlossaryPanelOpen;
+  final isGlossaryOpen = projectState.isGlossaryPanelOpen;  // ✅ Исправлено
   
   return Scaffold(
     body: Row(
       children: [
+        // ✅ Левая панель
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
@@ -108,6 +111,7 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
               : const SidePanel(),
         ),
         
+        // ✅ Кнопка сворачивания
         Container(
           width: 24,
           decoration: BoxDecoration(
@@ -137,12 +141,14 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
           ),
         ),
         
+        // ✅ Редакторы
         Expanded(
           child: showTwoEditors
               ? _buildTwoEditorsLayout(context, borderColor, textColor)
               : _buildSingleEditorLayout(context, selectedDocument, textColor),
         ),
         
+        // ✅ Вкладки глоссария
         if (isGlossaryOpen) ...[
           Container(
             width: 24,
@@ -154,7 +160,7 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
               children: [
                 const SizedBox(height: 100),
                 GestureDetector(
-                  onTap: () => documentState.toggleGlossaryPanel(),
+                  onTap: () => projectState.toggleGlossaryPanel(),  // ✅ Исправлено
                   child: Container(
                     width: 24,
                     height: 82,
@@ -180,7 +186,7 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
               children: [
                 const SizedBox(height: 100),
                 GestureDetector(
-                  onTap: () => documentState.openGlossaryPanel(),
+                  onTap: () => projectState.openGlossaryPanel(),  // ✅ Исправлено
                   child: Container(
                     width: 24,
                     height: 82,
@@ -196,7 +202,7 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
           ),
       ],
     ),
-
+    // ✅ FAB для создания документа
     persistentFooterButtons: [
       FloatingActionButton(
         heroTag: 'createDoc',
@@ -205,20 +211,21 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
         child: const Icon(Icons.add),
       ),
     ],
-
-    floatingActionButton: Selector<SettingRepository, bool>(
-      selector: (_, state) => state.isGraphView,
-      builder: (context, isGraphView, _) {
-        return FloatingActionButton(
-          onPressed: () => settingState.toggleViewMode(),
-          tooltip: isGraphView ? 'Список' : 'Граф',
-          child: Icon(isGraphView ? Icons.list : Icons.account_tree),
-        );
-      },
-    ),
+    // ✅ FAB для переключения список/граф
+    floatingActionButton: Selector<ProjectRepository, bool>(  // ✅ Из ProjectRepository
+  selector: (_, state) => state.isGraphView,
+  builder: (context, isGraphView, _) {
+    return FloatingActionButton(
+      onPressed: () => projectState.toggleViewMode(),  // ✅ projectState
+      tooltip: isGraphView ? 'Список' : 'Граф',
+      child: Icon(isGraphView ? Icons.list : Icons.account_tree),
+    );
+  },
+),
   );
 }
 
+// ✅ _buildSingleEditorLayout
 Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocument, Color textColor) {
   if (selectedDocument == null) {
     return Center(
@@ -267,6 +274,7 @@ Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocum
   );
 }
 
+// ✅ _buildTwoEditorsLayout
 Widget _buildTwoEditorsLayout(BuildContext context, Color borderColor, Color textColor) {
   final documentState = context.watch<DocumentRepository>();
   
@@ -309,6 +317,7 @@ Widget _buildTwoEditorsLayout(BuildContext context, Color borderColor, Color tex
   );
 }
 
+// ✅ _buildEditorHeader
 Widget _buildEditorHeader(BuildContext context, int index, Color textColor, AppDocument? doc) {
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
