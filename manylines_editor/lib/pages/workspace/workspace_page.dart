@@ -10,7 +10,7 @@ import '../../widgets/quill_editor_wrapper.dart';
 import '../../features/document/create_document.dart';
 import 'widgets/side_panel.dart';
 import 'widgets/glossary_panel.dart';
-import 'widgets/project_top_bar.dart';  // ✅ Импортируем верхнюю панель
+import 'widgets/project_top_bar.dart';
 
 class WorkspacePage extends StatelessWidget {
   const WorkspacePage({super.key});
@@ -48,7 +48,7 @@ class _MobileWorkspace extends StatelessWidget {
     
     return Column(
       children: [
-        const ProjectTopBar(),  // ✅ Верхняя панель
+        const ProjectTopBar(),
         Expanded(
           child: QuillEditorWrapper(
             document: document,
@@ -97,10 +97,10 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
   final projectState = context.watch<ProjectRepository>();
   
   final isDarkMode = settingState.isDarkMode;
-  final leftPanelBg = isDarkMode ? const Color(0x603D2E) : Colors.white;
-  final headerBg = isDarkMode ? const Color(0x662C90) : const Color(0xAB73D3);
-  final textColor = isDarkMode ? Colors.white : Colors.white;
-  final borderColor = isDarkMode ? const Color(0xB07156) : const Color(0xAB73D3);
+  final leftPanelBg = isDarkMode ? const Color(0xFF603D2E) : Colors.white;
+  final headerBg = isDarkMode ? const Color(0xFF662C90) : const Color(0xFFAB73D3);
+  final textColor = isDarkMode ? Colors.white : const Color(0xFFB07156);
+  final borderColor = isDarkMode ? const Color(0xFFB07156) : const Color(0xFFAB73D3);
   
   final showTwoEditors = documentState.secondSelectedDocument != null;
   final isPanelCollapsed = settingState.isSidePanelCollapsed;
@@ -114,7 +114,7 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
     ),
     body: Row(
       children: [
-        // ✅ Левая панель
+        // ✅ Левая панель (Side Panel)
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
@@ -127,12 +127,12 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
               : const SidePanel(),
         ),
         
-        // ✅ Кнопка сворачивания
+        // ✅ Вкладка для сворачивания/разворачивания левой панели
         Container(
           width: 24,
           decoration: BoxDecoration(
             color: isPanelCollapsed 
-                ? (isDarkMode ? const Color(0x603D2E) : const Color(0xFFFEDEB)) 
+                ? (isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB)) 
                 : Colors.transparent,
             border: Border(right: BorderSide(color: borderColor)),
           ),
@@ -145,12 +145,12 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
                   width: 24,
                   height: 82,
                   decoration: BoxDecoration(
-                    color: isDarkMode ? const Color(0xB07156) : const Color(0xAB73D3),
+                    color: isDarkMode ? const Color(0xFFB07156) : const Color(0xFFAB73D3),
                   ),
                   child: Icon(
                     isPanelCollapsed ? Icons.chevron_right : Icons.chevron_left,
                     size: 20,
-                    color: textColor,
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -168,10 +168,11 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
         
         // ✅ Вкладки глоссария
         if (isGlossaryOpen) ...[
+          // ✅ Вкладка для ЗАКРЫТИЯ глоссария
           Container(
             width: 24,
             decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0x603D2E) : const Color(0xFFFEDEB),
+              color: isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB),
               border: Border(right: BorderSide(color: borderColor)),
             ),
             child: Column(
@@ -183,7 +184,7 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
                     width: 24,
                     height: 82,
                     decoration: BoxDecoration(
-                      color: isDarkMode ? const Color(0xB07156) : const Color(0xAB73D3),
+                      color: isDarkMode ? const Color(0xFFB07156) : const Color(0xFFAB73D3),
                     ),
                     child: const Icon(Icons.chevron_right, size: 20, color: Colors.white),
                   ),
@@ -194,10 +195,11 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
           ),
           const GlossaryPanel(),
         ] else
+          // ✅ Вкладка для ОТКРЫТИЯ глоссария
           Container(
             width: 24,
             decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0x603D2E) : const Color(0xFFFEDEB),
+              color: isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB),
               border: Border(right: BorderSide(color: borderColor)),
             ),
             child: Column(
@@ -209,7 +211,7 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
                     width: 24,
                     height: 82,
                     decoration: BoxDecoration(
-                      color: isDarkMode ? const Color(0x16DB93) : const Color(0x16DB93),
+                      color: isDarkMode ? const Color(0xFF16DB93) : const Color(0xFF16DB93),
                     ),
                     child: const Icon(Icons.chevron_left, size: 20, color: Colors.white),
                   ),
@@ -262,7 +264,7 @@ Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocum
     children: [
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        color: isDarkMode ? const Color(0x603D2E) : const Color(0xFFFEDEB),
+        color: isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB),
         child: Row(
           children: [
             Expanded(
@@ -340,7 +342,7 @@ Widget _buildEditorHeader(BuildContext context, int index, Color textColor, AppD
   final isDarkMode = context.watch<SettingRepository>().isDarkMode;
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    color: isDarkMode ? const Color(0x603D2E) : const Color(0xFFFEDEB),
+    color: isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB),
     child: Row(
       children: [
         Expanded(

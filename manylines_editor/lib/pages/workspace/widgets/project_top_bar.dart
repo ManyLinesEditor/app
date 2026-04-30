@@ -1,3 +1,5 @@
+// lib/pages/workspace/widgets/project_top_bar.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../entities/project/project_repository.dart';
@@ -16,13 +18,13 @@ class ProjectTopBar extends StatelessWidget {
       height: 60,
       decoration: BoxDecoration(
         color: isDarkMode 
-            ? const Color(0x603D2E)  // Тёмно-коричневый
-            : const Color(0xFFFEDEB), // Светло-розовый
+            ? const Color(0xFF603D2E)  // Тёмно-коричневый
+            : const Color(0xFFFFEDEB), // Светло-розовый
         border: Border(
           bottom: BorderSide(
             color: isDarkMode 
-                ? const Color(0xB07156)  // Коричневый
-                : const Color(0xAB73D3),  // Фиолетовый
+                ? const Color(0xFFB07156)  // Коричневый
+                : const Color(0xFFAB73D3),  // Фиолетовый
             width: 2,
           ),
         ),
@@ -33,7 +35,9 @@ class ProjectTopBar extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 16),
             child: Image.asset(
-              'assets/images/logo_light.png',
+              isDarkMode 
+                  ? 'assets/images/logo_dark.png' 
+                  : 'assets/images/logo_light.png',
               height: 40,
               width: 40,
               fit: BoxFit.contain,
@@ -46,16 +50,19 @@ class ProjectTopBar extends StatelessWidget {
               child: Text(
                 projectState.selectedProject?.name ?? 'Project',
                 style: TextStyle(
-                  fontFamily: 'LT Remark',
+                  fontFamily: 'LT Remark',  // ✅ Шрифт заголовков
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: isDarkMode ? Colors.white : const Color(0xB07156),
+                  color: isDarkMode 
+                      ? Colors.white 
+                      : const Color(0xFFB07156),  // ✅ Коричневый цвет
+                  letterSpacing: 2,
                 ),
               ),
             ),
           ),
           
-          // ✅ Кнопка переключения темы справа (опционально)
+          // ✅ Кнопки справа
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Row(
@@ -66,7 +73,9 @@ class ProjectTopBar extends StatelessWidget {
                     settingState.isSidePanelCollapsed 
                         ? Icons.menu 
                         : Icons.close,
-                    color: isDarkMode ? Colors.white : const Color(0xB07156),
+                    color: isDarkMode 
+                        ? Colors.white 
+                        : const Color(0xFFB07156),
                   ),
                   onPressed: () => settingState.toggleSidePanel(),
                   tooltip: 'Панель',
@@ -75,7 +84,9 @@ class ProjectTopBar extends StatelessWidget {
                 IconButton(
                   icon: Icon(
                     isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                    color: isDarkMode ? Colors.white : const Color(0xB07156),
+                    color: isDarkMode 
+                        ? Colors.white 
+                        : const Color(0xFFB07156),
                   ),
                   onPressed: () => settingState.toggleDarkMode(!isDarkMode),
                   tooltip: isDarkMode ? 'Светлая' : 'Тёмная',

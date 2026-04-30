@@ -33,9 +33,9 @@ flutter:
   fonts:
     - family: Ostrovsky
       fonts:
-        - asset: assets/fonts/Ostrovsky-Bold_0.ttf
+        - asset: assets/fonts/Ostrovsky-Bold_0.otf
           weight: 700
     - family: LT Remark
       fonts:
-        - asset: assets/fonts/LTRemark-Regular.ttf
+        - asset: assets/fonts/LTRemark-Regular.otf
           weight: 700
