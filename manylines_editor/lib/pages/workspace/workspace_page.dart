@@ -1,3 +1,5 @@
+// lib/pages/workspace/workspace_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../entities/document/document_repository.dart';
@@ -8,6 +10,7 @@ import '../../widgets/quill_editor_wrapper.dart';
 import '../../features/document/create_document.dart';
 import 'widgets/side_panel.dart';
 import 'widgets/glossary_panel.dart';
+import 'widgets/project_top_bar.dart';  // ✅ Импортируем верхнюю панель
 
 class WorkspacePage extends StatelessWidget {
   const WorkspacePage({super.key});
@@ -36,16 +39,23 @@ class _MobileWorkspace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final documentState = context.watch<DocumentRepository>();  // ✅ Исправлено
+    final documentState = context.watch<DocumentRepository>();
     final document = documentState.selectedDocument;
     
     if (document == null) {
       return const _MobileEmptyState();
     }
     
-    return QuillEditorWrapper(
-      document: document,
-      editorIndex: 1,
+    return Column(
+      children: [
+        const ProjectTopBar(),  // ✅ Верхняя панель
+        Expanded(
+          child: QuillEditorWrapper(
+            document: document,
+            editorIndex: 1,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -84,25 +94,31 @@ class _MobileEmptyState extends StatelessWidget {
 Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) {
   final settingState = context.watch<SettingRepository>();
   final documentState = context.watch<DocumentRepository>();
-  final projectState = context.watch<ProjectRepository>();  // ✅ Добавлено
+  final projectState = context.watch<ProjectRepository>();
   
-  final leftPanelBg = settingState.isDarkMode ? Colors.grey[900] : Colors.white;
-  final headerBg = settingState.isDarkMode ? Colors.green[900] : Colors.green[50];
-  final textColor = settingState.isDarkMode ? Colors.white : Colors.black87;
-  final borderColor = settingState.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
+  final isDarkMode = settingState.isDarkMode;
+  final leftPanelBg = isDarkMode ? const Color(0x603D2E) : Colors.white;
+  final headerBg = isDarkMode ? const Color(0x662C90) : const Color(0xAB73D3);
+  final textColor = isDarkMode ? Colors.white : Colors.white;
+  final borderColor = isDarkMode ? const Color(0xB07156) : const Color(0xAB73D3);
   
   final showTwoEditors = documentState.secondSelectedDocument != null;
   final isPanelCollapsed = settingState.isSidePanelCollapsed;
-  final isGlossaryOpen = projectState.isGlossaryPanelOpen;  // ✅ Исправлено
+  final isGlossaryOpen = projectState.isGlossaryPanelOpen;
   
   return Scaffold(
+    // ✅ Верхняя панель
+    appBar: PreferredSize(
+      preferredSize: const Size.fromHeight(60),
+      child: const ProjectTopBar(),
+    ),
     body: Row(
       children: [
         // ✅ Левая панель
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
-          width: isPanelCollapsed ? 0 : 300,
+          width: isPanelCollapsed ? 0 : (projectState.isGraphView ? 800 : 300),
           decoration: BoxDecoration(
             border: Border(right: BorderSide(color: borderColor)),
           ),
@@ -115,7 +131,9 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
         Container(
           width: 24,
           decoration: BoxDecoration(
-            color: isPanelCollapsed ? (settingState.isDarkMode ? Colors.grey[800] : Colors.grey[200]) : Colors.transparent,
+            color: isPanelCollapsed 
+                ? (isDarkMode ? const Color(0x603D2E) : const Color(0xFFFEDEB)) 
+                : Colors.transparent,
             border: Border(right: BorderSide(color: borderColor)),
           ),
           child: Column(
@@ -127,7 +145,7 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
                   width: 24,
                   height: 82,
                   decoration: BoxDecoration(
-                    color: settingState.isDarkMode ? Colors.grey[700] : Colors.grey[300],
+                    color: isDarkMode ? const Color(0xB07156) : const Color(0xAB73D3),
                   ),
                   child: Icon(
                     isPanelCollapsed ? Icons.chevron_right : Icons.chevron_left,
@@ -145,7 +163,7 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
         Expanded(
           child: showTwoEditors
               ? _buildTwoEditorsLayout(context, borderColor, textColor)
-              : _buildSingleEditorLayout(context, selectedDocument, textColor),
+              : _buildSingleEditorLayout(context, selectedDocument, textColor, isDarkMode),
         ),
         
         // ✅ Вкладки глоссария
@@ -153,19 +171,19 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
           Container(
             width: 24,
             decoration: BoxDecoration(
-              color: settingState.isDarkMode ? Colors.grey[800] : Colors.grey[200],
+              color: isDarkMode ? const Color(0x603D2E) : const Color(0xFFFEDEB),
               border: Border(right: BorderSide(color: borderColor)),
             ),
             child: Column(
               children: [
                 const SizedBox(height: 100),
                 GestureDetector(
-                  onTap: () => projectState.toggleGlossaryPanel(),  // ✅ Исправлено
+                  onTap: () => projectState.toggleGlossaryPanel(),
                   child: Container(
                     width: 24,
                     height: 82,
                     decoration: BoxDecoration(
-                      color: settingState.isDarkMode ? Colors.grey[700] : Colors.grey[300],
+                      color: isDarkMode ? const Color(0xB07156) : const Color(0xAB73D3),
                     ),
                     child: const Icon(Icons.chevron_right, size: 20, color: Colors.white),
                   ),
@@ -179,19 +197,19 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
           Container(
             width: 24,
             decoration: BoxDecoration(
-              color: settingState.isDarkMode ? Colors.grey[800] : Colors.grey[200],
+              color: isDarkMode ? const Color(0x603D2E) : const Color(0xFFFEDEB),
               border: Border(right: BorderSide(color: borderColor)),
             ),
             child: Column(
               children: [
                 const SizedBox(height: 100),
                 GestureDetector(
-                  onTap: () => projectState.openGlossaryPanel(),  // ✅ Исправлено
+                  onTap: () => projectState.openGlossaryPanel(),
                   child: Container(
                     width: 24,
                     height: 82,
                     decoration: BoxDecoration(
-                      color: settingState.isDarkMode ? Colors.blue[700] : Colors.blue[300],
+                      color: isDarkMode ? const Color(0x16DB93) : const Color(0x16DB93),
                     ),
                     child: const Icon(Icons.chevron_left, size: 20, color: Colors.white),
                   ),
@@ -212,21 +230,21 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
       ),
     ],
     // ✅ FAB для переключения список/граф
-    floatingActionButton: Selector<ProjectRepository, bool>(  // ✅ Из ProjectRepository
-  selector: (_, state) => state.isGraphView,
-  builder: (context, isGraphView, _) {
-    return FloatingActionButton(
-      onPressed: () => projectState.toggleViewMode(),  // ✅ projectState
-      tooltip: isGraphView ? 'Список' : 'Граф',
-      child: Icon(isGraphView ? Icons.list : Icons.account_tree),
-    );
-  },
-),
+    floatingActionButton: Selector<ProjectRepository, bool>(
+      selector: (_, state) => state.isGraphView,
+      builder: (context, isGraphView, _) {
+        return FloatingActionButton(
+          onPressed: () => projectState.toggleViewMode(),
+          tooltip: isGraphView ? 'Список' : 'Граф',
+          child: Icon(isGraphView ? Icons.list : Icons.account_tree),
+        );
+      },
+    ),
   );
 }
 
 // ✅ _buildSingleEditorLayout
-Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocument, Color textColor) {
+Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocument, Color textColor, bool isDarkMode) {
   if (selectedDocument == null) {
     return Center(
       child: Column(
@@ -244,7 +262,7 @@ Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocum
     children: [
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        color: context.watch<SettingRepository>().isDarkMode ? Colors.grey[850] : Colors.grey[100],
+        color: isDarkMode ? const Color(0x603D2E) : const Color(0xFFFEDEB),
         child: Row(
           children: [
             Expanded(
@@ -319,9 +337,10 @@ Widget _buildTwoEditorsLayout(BuildContext context, Color borderColor, Color tex
 
 // ✅ _buildEditorHeader
 Widget _buildEditorHeader(BuildContext context, int index, Color textColor, AppDocument? doc) {
+  final isDarkMode = context.watch<SettingRepository>().isDarkMode;
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    color: context.watch<SettingRepository>().isDarkMode ? Colors.grey[850] : Colors.grey[100],
+    color: isDarkMode ? const Color(0x603D2E) : const Color(0xFFFEDEB),
     child: Row(
       children: [
         Expanded(
