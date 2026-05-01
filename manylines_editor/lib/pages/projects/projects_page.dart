@@ -43,15 +43,18 @@ class ProjectsPage extends StatelessWidget {
     final state = context.watch<SettingRepository>();
     final isDarkMode = state.isDarkMode;
     final textColor = isDarkMode ? Colors.white54 : Colors.black54;
-    final bgColor = isDarkMode 
-        ? const Color.fromARGB(255, 6, 58, 137) 
-        : Colors.blue[50];
+    final bgColor = isDarkMode ? const Color.fromARGB(255, 18, 157, 106) : const Color(0xFFAB73D3);
     
     return Container(
       color: bgColor,
       padding: const EdgeInsets.all(16),
       child: Center(
-        child: Text('Other Settings ...', style: TextStyle(color: textColor)),
+        child: Text(
+          'Other Settings ...',
+          style: TextStyle(
+            fontFamily: 'Ostrovsky',
+            color: textColor),
+          ),
       ),
     );
   }

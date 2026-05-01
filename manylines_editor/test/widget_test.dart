@@ -9,7 +9,7 @@ import 'package:manylines_editor/entities/project/project_repository.dart';
 void main() {
 
   testWidgets('App loads without crashing', (WidgetTester tester) async {
-    await tester.pumpWidget(const ManyllinesApp());
+    await tester.pumpWidget(const ManylinesApp());
     await tester.pumpAndSettle();
 
     expect(find.byType(Scaffold), findsOneWidget);
@@ -18,7 +18,7 @@ void main() {
   });
 
   testWidgets('Can create a new project', (WidgetTester tester) async {
-    await tester.pumpWidget(const ManyllinesApp());
+    await tester.pumpWidget(const ManylinesApp());
     await tester.pumpAndSettle();
 
     final fabFinder = find.byWidgetPredicate(
@@ -44,10 +44,10 @@ void main() {
   });
 
   testWidgets('Can toggle dark mode', (WidgetTester tester) async {
-    await tester.pumpWidget(const ManyllinesApp());
+    await tester.pumpWidget(const ManylinesApp());
     await tester.pumpAndSettle();
 
-    final context = tester.element(find.byType(ManyllinesApp).first);
+    final context = tester.element(find.byType(ManylinesApp).first);
     final settingRepo = Provider.of<SettingRepository>(context, listen: false);
     
     settingRepo.toggleDarkMode(true);
@@ -57,7 +57,7 @@ void main() {
   });
 
   testWidgets('Can select a project', (WidgetTester tester) async {
-    await tester.pumpWidget(const ManyllinesApp());
+    await tester.pumpWidget(const ManylinesApp());
     await tester.pumpAndSettle();
 
     final projectTile = find.text('Project 1');

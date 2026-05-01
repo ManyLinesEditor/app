@@ -131,9 +131,7 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
         Container(
           width: 24,
           decoration: BoxDecoration(
-            color: isPanelCollapsed 
-                ? (isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB)) 
-                : Colors.transparent,
+            color: (isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB)),
             border: Border(right: BorderSide(color: borderColor)),
           ),
           child: Column(
@@ -211,7 +209,7 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
                     width: 24,
                     height: 82,
                     decoration: BoxDecoration(
-                      color: isDarkMode ? const Color(0xFF16DB93) : const Color(0xFF16DB93),
+                      color: isDarkMode ? const Color(0xFFB07156) : const Color(0xFFAB73D3),
                     ),
                     child: const Icon(Icons.chevron_left, size: 20, color: Colors.white),
                   ),

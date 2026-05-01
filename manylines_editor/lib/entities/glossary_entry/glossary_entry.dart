@@ -19,10 +19,12 @@ class GlossaryDefinition {
   final String id;
   String text;
   bool isActive;
+  bool isCollapsed;
 
   GlossaryDefinition({
     required this.id,
     required this.text,
     this.isActive = false,
+    this.isCollapsed = true,
   });
 }

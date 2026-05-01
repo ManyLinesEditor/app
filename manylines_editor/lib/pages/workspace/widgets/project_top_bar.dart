@@ -23,8 +23,8 @@ class ProjectTopBar extends StatelessWidget {
         border: Border(
           bottom: BorderSide(
             color: isDarkMode 
-                ? const Color(0xFFB07156)  // Коричневый
-                : const Color(0xFFAB73D3),  // Фиолетовый
+                ? const Color.fromARGB(255, 255, 255, 255)  // Коричневый
+                : const Color(0xFF603D2E),  // Фиолетовый
             width: 2,
           ),
         ),
@@ -50,12 +50,12 @@ class ProjectTopBar extends StatelessWidget {
               child: Text(
                 projectState.selectedProject?.name ?? 'Project',
                 style: TextStyle(
-                  fontFamily: 'LT Remark',  // ✅ Шрифт заголовков
+                  fontFamily: 'Ostrovsky',  // ✅ Шрифт заголовков
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: isDarkMode 
                       ? Colors.white 
-                      : const Color(0xFFB07156),  // ✅ Коричневый цвет
+                      : const Color(0xFF603D2E),  // ✅ Коричневый цвет
                   letterSpacing: 2,
                 ),
               ),
@@ -75,7 +75,7 @@ class ProjectTopBar extends StatelessWidget {
                         : Icons.close,
                     color: isDarkMode 
                         ? Colors.white 
-                        : const Color(0xFFB07156),
+                        : const Color(0xFF603D2E),
                   ),
                   onPressed: () => settingState.toggleSidePanel(),
                   tooltip: 'Панель',
@@ -86,7 +86,7 @@ class ProjectTopBar extends StatelessWidget {
                     isDarkMode ? Icons.light_mode : Icons.dark_mode,
                     color: isDarkMode 
                         ? Colors.white 
-                        : const Color(0xFFB07156),
+                        : const Color(0xFF603D2E),
                   ),
                   onPressed: () => settingState.toggleDarkMode(!isDarkMode),
                   tooltip: isDarkMode ? 'Светлая' : 'Тёмная',

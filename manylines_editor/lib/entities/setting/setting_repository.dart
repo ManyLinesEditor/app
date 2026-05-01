@@ -3,9 +3,9 @@ import 'setting.dart';
 
 class SettingRepository extends ChangeNotifier {
   final List<Setting> _settings = [
-    Setting(id: 'setting1', name: 'Setting 1', expanded: true),
-    Setting(id: 'setting2', name: 'Setting 2', expanded: false),
-    Setting(id: 'setting3', name: 'Setting 3', expanded: true),
+    Setting(id: 'setting1', name: 'Setting 1', expanded: false),
+    Setting(id: 'setting2', name: 'Сменить тему', expanded: false),
+    Setting(id: 'setting3', name: 'Включить перетаскивание', expanded: false),
   ];
 
   bool _switchableValue = true;

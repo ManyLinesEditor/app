@@ -49,7 +49,7 @@ class ProjectDialog {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[700],
+                  backgroundColor: const Color(0xFFAB73D3),
                   foregroundColor: Colors.white,
                 ),
                 child: const Text('Создать'),

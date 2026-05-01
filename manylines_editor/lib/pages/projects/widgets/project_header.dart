@@ -1,6 +1,7 @@
+// lib/pages/projects/widgets/project_header.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../entities/project/project_repository.dart';
 import '../../../entities/setting/setting_repository.dart';
 
 class ProjectHeader extends StatelessWidget {
@@ -8,36 +9,48 @@ class ProjectHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final projectState = context.watch<ProjectRepository>();
     final settingState = context.watch<SettingRepository>();
-    
     final isDarkMode = settingState.isDarkMode;
-    final headerBg = isDarkMode ? Colors.grey[850] : Colors.white;
-    final logoBg = isDarkMode ? Colors.grey[800] : Colors.white;
-    final borderColor = isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
-    final logoBorderColor = isDarkMode ? Colors.grey[600]! : Colors.grey[400]!;
-    final textColor = isDarkMode ? Colors.white : Colors.black87;
-    final logoTextColor = isDarkMode ? Colors.white : Colors.black;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      height: 60,
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: borderColor)),
-        color: headerBg,
+        color: isDarkMode ? const Color.fromARGB(255, 29, 10, 1) : const Color(0xFFFFEDEB),
+        border: Border(
+          bottom: BorderSide(
+            color: isDarkMode ? const Color(0xFF16DB93) : Color(0xFFAB73D3),
+            width: 2,
+          ),
+        ),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              border: Border.all(color: logoBorderColor),
-              color: logoBg,
-              borderRadius: BorderRadius.circular(4),
+          // ✅ Логотип PNG
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Image.asset(
+              isDarkMode 
+                  ? 'assets/images/logo_dark.png' 
+                  : 'assets/images/logo_light.png',
+              height: 40,
+              width: 40,
+              fit: BoxFit.contain,
             ),
-            child: Text('Logo', style: TextStyle(fontWeight: FontWeight.bold, color: logoTextColor)),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Text('Manyllines', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: textColor))),
+          
+          // ✅ Название приложения
+          Text(
+            'Manylines',
+            style: TextStyle(
+              fontFamily: 'LT Remark',  // ✅ Шрифт заголовков
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: isDarkMode 
+                  ? Colors.white 
+                  : const Color(0xFF603D2E),  // ✅ Коричневый
+            ),
+          ),
         ],
       ),
     );

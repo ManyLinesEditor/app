@@ -11,7 +11,6 @@ import '../../../features/document/toggle_pin.dart';
 import '../../../features/document/indent_document.dart';
 import '../../../features/document/outdent_document.dart';
 
-// lib/pages/workspace/widgets/side_panel.dart
 
 class SidePanel extends StatelessWidget {
   const SidePanel({super.key});
@@ -20,13 +19,14 @@ class SidePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final projectState = context.watch<ProjectRepository>();
     final settingState = context.watch<SettingRepository>();
+    final isDarkMode = context.watch<SettingRepository>().isDarkMode;
     final isPanelCollapsed = settingState.isSidePanelCollapsed;
-    final isGraphView = projectState.isGraphView;  // ✅ Проверяем режим
+    final isGraphView = projectState.isGraphView;
     
-    final leftPanelBg = settingState.isDarkMode ? Colors.grey[900] : Colors.white;
-    final headerBg = settingState.isDarkMode ? Colors.green[900] : Colors.green[50];
+    final leftPanelBg = settingState.isDarkMode ? Colors.grey[900] : Color(0xFFFFEDEB);
+    final headerBg = settingState.isDarkMode ? Color.fromARGB(255, 0, 0, 0) : Color(0xFFFFEDEB);
     final textColor = settingState.isDarkMode ? Colors.white : Colors.black87;
-    final borderColor = settingState.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
+    final borderColor = settingState.isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E);
 
     return AnimatedContainer(
   duration: const Duration(milliseconds: 300),
@@ -42,25 +42,40 @@ class SidePanel extends StatelessWidget {
           : Column(
               children: [
                 Container(
+                  decoration: BoxDecoration(
+                    color: headerBg,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E),
+                        width: 3,
+                      ),
+                    ),
+                  ),
                   padding: const EdgeInsets.all(16),
-                  color: headerBg,
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back),
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E),
+                        ),
                         onPressed: () => projectState.clearSelectedProject(),
                         tooltip: 'Back to projects',
                       ),
                       Expanded(
                         child: Text(
                           projectState.selectedProject?.name ?? '',
-                          style: TextStyle(color: textColor),
+                          style: TextStyle(
+                            fontSize: 18, 
+                            fontFamily: 'Ostrovsky',
+                            color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : const Color.fromARGB(255, 0, 0, 0),
+                          ),
                         ),
                       ),
                       IconButton(
                         icon: Icon(
                           projectState.isGraphView ? Icons.list : Icons.account_tree,
-                          color: textColor,
+                          color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E),
                         ),
                         onPressed: () => projectState.toggleViewMode(),
                         tooltip: projectState.isGraphView ? 'Список' : 'Граф',
@@ -86,7 +101,12 @@ class SidePanel extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            border: Border(top: BorderSide(color: borderColor)),
+                            border: Border(
+                              top: BorderSide(
+                                color: borderColor,
+                                width: 2,
+                              ),
+                            ),
                           ),
                           child: SizedBox(
                             width: double.infinity,
@@ -96,9 +116,9 @@ class SidePanel extends StatelessWidget {
                               label: const Text('Новый документ'),
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 12),
-                                foregroundColor: settingState.isDarkMode ? Colors.white : Colors.green[700],
+                                foregroundColor: settingState.isDarkMode ? Colors.green[700] : Color(0xFFAB73D3),
                                 side: BorderSide(
-                                  color: settingState.isDarkMode ? Colors.green[400]! : Colors.green[700]!,
+                                  color: settingState.isDarkMode ? Colors.green[400]! : Color(0xFFAB73D3),
                                 ),
                               ),
                             ),
@@ -135,7 +155,7 @@ class _DocumentsList extends StatelessWidget {
       children: [
         if (pinnedDocs.isNotEmpty)
           Container(
-            color: isDarkMode ? Colors.green[900]!.withOpacity(0.3) : Colors.green[50],
+            color: isDarkMode ? Color(0xFF16DB93) : Color(0xFF662C90),
             child: ReorderableListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -150,7 +170,8 @@ class _DocumentsList extends StatelessWidget {
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                        color: isDarkMode ? Colors.green[700]! : Colors.green[200]!,
+                        color: isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFFFFEDEB),
+                        width: 7,
                       ),
                     ),
                   ),
@@ -164,7 +185,7 @@ class _DocumentsList extends StatelessWidget {
                           '${index + 1}.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.green[700],
+                            color: Color(0xFFFFEDEB),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -172,11 +193,17 @@ class _DocumentsList extends StatelessWidget {
                         Icon(
                           Icons.push_pin,
                           size: 16,
-                          color: Colors.green[700],
+                          color: Color(0xFFFFEDEB),
                         ),
                       ],
                     ),
-                    title: Text(doc.name),
+                    title: Text(doc.name,
+                      style: TextStyle(
+                        fontSize: 14, 
+                        fontFamily: 'Ostrovsky',
+                        color: isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFFFFEDEB),
+                        ),
+                      ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -184,7 +211,7 @@ class _DocumentsList extends StatelessWidget {
                           onTap: () {},
                           child: Checkbox(
                             value: doc.isPinned,
-                            activeColor: Colors.green[700],
+                            activeColor: Color.fromARGB(255, 211, 198, 197),
                             onChanged: (value) {
                               TogglePinFeature.execute(context, doc);
                             },
@@ -216,7 +243,7 @@ class _DocumentsList extends StatelessWidget {
           ),
         Expanded(
           child: Container(
-            color: isDarkMode ? Colors.blue[900]!.withOpacity(0.2) : Colors.blue[50],
+            color: isDarkMode ? Color.fromARGB(255, 0, 0, 0) : Color(0xFFFFEDEB),
             child: _buildDismissibleList(project, unpinnedDocs, context),
           ),
         ),
@@ -258,13 +285,13 @@ class _DocumentsList extends StatelessWidget {
           key: ValueKey(doc.id),
           direction: DismissDirection.horizontal,
           background: Container(
-            color: Colors.blue,
+            color: isDarkMode ? Color.fromARGB(237, 88, 83, 83) : Color.fromARGB(238, 213, 195, 194),
             alignment: Alignment.centerLeft,
             padding: const EdgeInsets.only(left: 16),
             child: const Icon(Icons.arrow_back, color: Colors.white),
           ),
           secondaryBackground: Container(
-            color: Colors.green,
+            color: isDarkMode ? Color.fromARGB(237, 88, 83, 83) : Color.fromARGB(238, 213, 195, 194),
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 16),
             child: const Icon(Icons.arrow_forward, color: Colors.white),
@@ -280,13 +307,13 @@ class _DocumentsList extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               color: doc.parentId == null
-                  ? (isDarkMode ? Colors.blue[900]!.withOpacity(0.2) : Colors.blue[50])
-                  : (isDarkMode ? Colors.green[900]!.withOpacity(0.3) : Colors.green[50]),
+                  ? (isDarkMode ? const Color.fromARGB(255, 36, 153, 60) : Color(0xFFAB73D3))
+                  : (isDarkMode ? const Color.fromARGB(255, 104, 196, 110) : Color.fromARGB(255, 205, 164, 234)),
               border: Border(
                 bottom: BorderSide(
                   color: isDarkMode
-                      ? (doc.parentId == null ? Colors.blue[700]! : Colors.green[700]!)
-                      : (doc.parentId == null ? Colors.blue[200]! : Colors.green[200]!),
+                      ? (doc.parentId == null ? const Color.fromARGB(255, 0, 0, 0) : const Color.fromARGB(255, 0, 0, 0))
+                      : (doc.parentId == null ? Color(0xFFFFEDEB) : Color(0xFFFFEDEB)),
                 ),
               ),
             ),
@@ -300,7 +327,7 @@ class _DocumentsList extends StatelessWidget {
                     number,
                     style: TextStyle(
                       fontSize: 12,
-                      color: doc.parentId == null ? Colors.blue[700] : Colors.green[700],
+                      color: doc.parentId == null ? const Color.fromARGB(255, 255, 255, 255) : const Color.fromARGB(255, 255, 255, 255),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -308,11 +335,17 @@ class _DocumentsList extends StatelessWidget {
                   Icon(
                     doc.parentId == null ? Icons.insert_drive_file : Icons.subdirectory_arrow_right,
                     size: 16,
-                    color: doc.parentId == null ? Colors.blue[700] : Colors.green[700],
+                    color: doc.parentId == null ? const Color.fromARGB(255, 255, 255, 255) : const Color.fromARGB(255, 255, 255, 255),
                   ),
                 ],
               ),
-              title: Text(doc.name),
+              title: Text(doc.name,
+                style: TextStyle(
+                  fontSize: 14, 
+                  fontFamily: 'Ostrovsky',
+                  color: isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFFFFEDEB),
+                ),
+              ),
               subtitle: doc.parentId != null ? Text('Поддокумент', style: TextStyle(fontSize: 10, color: Colors.grey[600])) : null,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -321,7 +354,7 @@ class _DocumentsList extends StatelessWidget {
                     onTap: () {},
                     child: Checkbox(
                       value: doc.isPinned,
-                      activeColor: Colors.green[700],
+                      activeColor: const Color.fromARGB(255, 255, 0, 0),
                       onChanged: (value) {
                         TogglePinFeature.execute(context, doc);
                       },
@@ -373,7 +406,7 @@ class _DocumentsGraph extends StatelessWidget {
         // ✅ Список pinned документов сверху
         if (pinnedDocs.isNotEmpty)
           Container(
-            color: isDarkMode ? Colors.green[900]!.withOpacity(0.3) : Colors.green[50],
+            color: isDarkMode ? const Color(0xFF000000) : Color(0xFFAB73D3),
             child: ReorderableListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -388,7 +421,8 @@ class _DocumentsGraph extends StatelessWidget {
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                        color: isDarkMode ? Colors.green[700]! : Colors.green[200]!,
+                        color: isDarkMode ? Colors.green[700]! : Color(0xFFFFEDEB),
+                        width: 7,
                       ),
                     ),
                   ),
@@ -402,7 +436,7 @@ class _DocumentsGraph extends StatelessWidget {
                           '${index + 1}.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.green[700],
+                            color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : Color(0xFFFFEDEB),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -410,11 +444,17 @@ class _DocumentsGraph extends StatelessWidget {
                         Icon(
                           Icons.push_pin,
                           size: 16,
-                          color: Colors.green[700],
+                          color: isDarkMode ? Colors.green[700] : Color(0xFFFFEDEB),
                         ),
                       ],
                     ),
-                    title: Text(doc.name),
+                    title: Text(doc.name,
+                    style: TextStyle(
+                      fontSize: 14, 
+                      fontFamily: 'Ostrovsky',
+                      color: isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFFFFEDEB),
+                      ),
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -422,7 +462,7 @@ class _DocumentsGraph extends StatelessWidget {
                           onTap: () {},
                           child: Checkbox(
                             value: doc.isPinned,
-                            activeColor: Colors.green[700],
+                            activeColor: Color.fromARGB(255, 211, 198, 197),
                             onChanged: (value) {
                               TogglePinFeature.execute(context, doc);
                             },

@@ -63,10 +63,13 @@ class _GlossaryEntryTileState extends State<GlossaryEntryTile> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: widget.borderColor)),
+        border: Border(bottom: BorderSide(
+          color: widget.isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E),
+          width: 3),
+          ),
         color: widget.entry.isExpanded
-            ? (widget.isDarkMode ? Colors.blue[900]!.withOpacity(0.2) : Colors.blue[50])
-            : Colors.transparent,
+            ? (widget.isDarkMode ? Color(0xFFB07156) : Color(0xFFAB73D3))
+            : (widget.isDarkMode ? Color(0xFFB07156) : Color(0xFFAB73D3)),
       ),
       child: Column(
         children: [
@@ -76,15 +79,19 @@ class _GlossaryEntryTileState extends State<GlossaryEntryTile> {
             title: Row(
               children: [
                 Icon(
-                  widget.entry.isExpanded ? Icons.arrow_drop_down : Icons.arrow_right,
-                  size: 20,
-                  color: widget.textColor,
+                  widget.entry.isExpanded ? Icons.arrow_drop_down : Icons.arrow_drop_up,
+                  size: 30,
+                  color: Color.fromARGB(255, 255, 255, 255),
                 ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     widget.entry.term,
-                    style: const TextStyle(fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Ostrovsky',
+                      color: Color.fromARGB(255, 255, 255, 255)
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -103,33 +110,43 @@ class _GlossaryEntryTileState extends State<GlossaryEntryTile> {
   }
 
   Widget _buildDefinitionTile(GlossaryDefinition def) {
-    final isActive = def.isActive;
+    final isCollapsed = def.isCollapsed;  // ✅ Свернуто или нет
     
     return Container(
+      decoration: BoxDecoration(
+        color: !isCollapsed 
+          ? (widget.isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : Color(0xFFFFEDEB))
+          : (widget.isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : Color(0xFFFFEDEB)),
+          border: Border(top: BorderSide(
+            color: widget.isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E),
+            width: 2,
+            ),
+          ),
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      color: isActive 
-          ? (widget.isDarkMode ? Colors.green[900]!.withOpacity(0.2) : Colors.green[50])
-          : Colors.transparent,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ✅ Radio button
-          Radio<String>(
-            value: def.id,
-            groupValue: widget.entry.definitions.firstWhere((d) => d.isActive, orElse: () => def).id,
-            onChanged: (value) {
-              widget.onToggleDefinition(def.id);
-            },
-            activeColor: Colors.green[700],
+
+          GestureDetector(
+            onTap: () => widget.onToggleDefinition(def.id),
+            child: Icon(
+              isCollapsed ? Icons.radio_button_unchecked : Icons.radio_button_checked,
+              color: isCollapsed 
+                  ? (widget.isDarkMode ? Color(0xFFB07156) : Color(0xFFAB73D3))
+                  : (widget.isDarkMode ? Color(0xFFB07156) : Color(0xFFAB73D3)),
+              size: 20,
+            ),
           ),
+          const SizedBox(width: 8),
           
           // ✅ Определение
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (isActive) ...[
-                  // ✅ Активное: показываем TextField для редактирования
+                if (!isCollapsed) ...[
+                  // ✅ Развёрнуто: показываем TextField для редактирования
                   TextField(
                     controller: _controllers[def.id],
                     maxLines: null,
@@ -143,22 +160,28 @@ class _GlossaryEntryTileState extends State<GlossaryEntryTile> {
                       ),
                       filled: true,
                       fillColor: widget.isDarkMode ? Colors.grey[800] : Colors.white,
+                      contentPadding: const EdgeInsets.all(12),
                     ),
                     onChanged: (value) {
                       widget.onUpdateDefinition(def.id, value);
                     },
                   ),
                 ] else ...[
-                  // ✅ Неактивное: показываем первую строку с многоточием
+                  // ✅ Свёрнуто: показываем первую строку с многоточием
                   GestureDetector(
                     onTap: () => widget.onToggleDefinition(def.id),
-                    child: Text(
-                      _getFirstLine(def.text),
-                      style: TextStyle(
-                        color: widget.isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text(
+                        _getFirstLine(def.text),
+                        style: TextStyle(
+                          color: widget.isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E),
+                          fontStyle: def.text.isEmpty ? FontStyle.italic : FontStyle.normal,
+                          fontFamily: 'Ostrovsky'
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -185,7 +208,22 @@ class _GlossaryEntryTileState extends State<GlossaryEntryTile> {
   }
 
   String _getFirstLine(String text) {
+    if (text.isEmpty) return 'Lorem ipsum...';
     final lines = text.split('\n');
-    return lines.isNotEmpty ? lines.first : text;
+
+    String firstLine = lines.first;
+    String subtext = text;
+    if (firstLine.length > 20) {
+      firstLine = firstLine.substring(0, 20);
+      subtext = text.substring(0, 20) + '...';
+    }
+
+    final hasMoreLines = lines.length > 1 || text.length > lines.first.length;
+    if (!hasMoreLines) {
+      return subtext;
+    }
+    else {
+      return '$firstLine...';
+    }
   }
 }

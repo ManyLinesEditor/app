@@ -73,16 +73,28 @@ class GlossaryPanel extends StatelessWidget {
 
   Widget _buildHeader(String documentName, Color textColor, bool isDarkMode, BuildContext context) {
     return Container(
+      decoration: BoxDecoration( 
+        color: isDarkMode ? Color(0xFF603D2E) : Color(0xFFAB73D3),
+        border: Border(
+          bottom: BorderSide(
+            color: isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E),
+            width: 3,
+            ),
+          ),
+      ),
       padding: const EdgeInsets.all(12),
-      color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
       child: Row(
         children: [
-          const Icon(Icons.book, size: 20),
+          const Icon(Icons.book, size: 20,
+          color: Color.fromARGB(255, 255, 255, 255)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              documentName,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              documentName + ' Glossary',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Ostrovsky',
+                color: Color.fromARGB(255, 255, 255, 255),),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -111,7 +123,7 @@ class GlossaryPanel extends StatelessWidget {
   }
 }
 
-  Widget _buildAddEntrySection(
+  Widget buildAddEntrySection(
     String selectedText, 
     Color textColor, 
     bool isDarkMode, 

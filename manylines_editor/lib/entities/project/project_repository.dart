@@ -145,23 +145,18 @@ class ProjectRepository extends ChangeNotifier {
   }
 
   void toggleGlossaryDefinition(String definitionId) {
-    if (_selectedProject == null) return;
-    
-    for (var entry in _selectedProject!.glossary) {
-      for (var def in entry.definitions) {
-        if (def.id == definitionId) {
-          // ✅ Снимаем активность со всех определений этого термина
-          for (var otherDef in entry.definitions) {
-            otherDef.isActive = false;
-          }
-          // ✅ Активируем выбранное
-          def.isActive = true;
-          notifyListeners();
-          return;
-        }
+  if (_selectedProject == null) return;
+  
+  for (var entry in _selectedProject!.glossary) {
+    for (var def in entry.definitions) {
+      if (def.id == definitionId) {
+        def.isCollapsed = !def.isCollapsed;
+        notifyListeners();
+        return;
       }
     }
   }
+}
 
 // ... предыдущие методы ...
 

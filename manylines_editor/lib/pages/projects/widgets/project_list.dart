@@ -12,11 +12,9 @@ class ProjectList extends StatelessWidget {
     final projectState = context.watch<ProjectRepository>();
     final settingState = context.watch<SettingRepository>();
     
-    final bgColor = settingState.isDarkMode ? Colors.green[900] : Colors.green[50];
-    final borderColor = settingState.isDarkMode 
-        ? const Color.fromARGB(255, 0, 47, 22) 
-        : Colors.green.shade200;
-    final textColor = settingState.isDarkMode ? Colors.white : Colors.black87;
+    final bgColor = settingState.isDarkMode ? Colors.black87 : Color(0xFFAB73D3);
+    final borderColor = settingState.isDarkMode ? const Color(0xFF16DB93) : const Color.fromARGB(188, 102, 44, 144);
+    final textColor = settingState.isDarkMode ? Colors.white : Color(0xFFFFEDEB);
 
     if (settingState.switchableValue) {
       return ReorderableListView.builder(
