@@ -8,10 +8,8 @@ class DeleteGlossaryEntryFeature {
     String entryId, 
     String definitionId,
   ) {
-    // ✅ Используем ProjectRepository
     final repo = Provider.of<ProjectRepository>(context, listen: false);
     
-    // ✅ Удаляем определение (или весь термин если последнее)
     repo.deleteGlossaryDefinition(entryId, definitionId);
   }
 }

@@ -84,11 +84,9 @@ class ProjectRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Исправлено - используем try-catch вместо orElse: () => null
   void addGlossaryEntry(String term, String definition) {
     if (_selectedProject == null) return;
     
-    // ✅ Проверяем существует ли термин
     GlossaryEntry? existingEntry;
     try {
       existingEntry = _selectedProject!.glossary
@@ -98,7 +96,6 @@ class ProjectRepository extends ChangeNotifier {
     }
     
     if (existingEntry != null) {
-      // ✅ Добавляем новое определение к существующему термину
       final newDefinition = GlossaryDefinition(
         id: 'def${DateTime.now().millisecondsSinceEpoch}',
         text: definition,
@@ -106,7 +103,6 @@ class ProjectRepository extends ChangeNotifier {
       );
       existingEntry.definitions.add(newDefinition);
     } else {
-      // ✅ Создаём новый термин с первым определением
       final newEntry = GlossaryEntry(
         id: 'g${DateTime.now().millisecondsSinceEpoch}',
         term: term,
@@ -114,7 +110,7 @@ class ProjectRepository extends ChangeNotifier {
           GlossaryDefinition(
             id: 'def${DateTime.now().millisecondsSinceEpoch}',
             text: definition,
-            isActive: true,  // Первое определение активно
+            isActive: true,
           ),
         ],
       );
@@ -124,7 +120,6 @@ class ProjectRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Исправлено - используем for loop вместо firstWhere с orElse
   void updateGlossaryDefinition(String definitionId, String newText) {
     if (_selectedProject == null) return;
     
@@ -133,7 +128,7 @@ class ProjectRepository extends ChangeNotifier {
       try {
         def = entry.definitions.firstWhere((d) => d.id == definitionId);
       } catch (e) {
-        continue;  // Не найдено в этом entry, продолжаем поиск
+        continue;
       }
       
       if (def != null) {
@@ -158,9 +153,6 @@ class ProjectRepository extends ChangeNotifier {
   }
 }
 
-// ... предыдущие методы ...
-
-  // ✅ Исправлено - используем try-catch
   void deleteGlossaryDefinition(String entryId, String definitionId) {
     if (_selectedProject == null) return;
     
@@ -168,12 +160,11 @@ class ProjectRepository extends ChangeNotifier {
     try {
       entry = _selectedProject!.glossary.firstWhere((e) => e.id == entryId);
     } catch (e) {
-      return;  // Не найдено
+      return;
     }
     
     if (entry != null) {
       entry.definitions.removeWhere((d) => d.id == definitionId);
-      // ✅ Если удалили последнее определение — удаляем весь термин
       if (entry.definitions.isEmpty) {
         _selectedProject!.glossary.remove(entry);
       }
@@ -181,7 +172,6 @@ class ProjectRepository extends ChangeNotifier {
     }
   }
 
-  // ✅ ДОБАВЬТЕ ЭТОТ МЕТОД
   void toggleGlossaryEntry(String entryId) {
     if (_selectedProject == null) return;
     
@@ -191,7 +181,7 @@ class ProjectRepository extends ChangeNotifier {
       entry.isExpanded = !entry.isExpanded;
       notifyListeners();
     } catch (e) {
-      return;  // Не найдено
+      return;
     }
   }
 

@@ -8,10 +8,8 @@ class EditGlossaryEntryFeature {
     String definitionId, 
     String definition,
   ) {
-    // ✅ Используем ProjectRepository
     final repo = Provider.of<ProjectRepository>(context, listen: false);
     
-    // ✅ Обновляем текст определения
     repo.updateGlossaryDefinition(definitionId, definition);
   }
 }

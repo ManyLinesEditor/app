@@ -10,10 +10,8 @@ class TogglePinFeature {
     final documentRepo = Provider.of<DocumentRepository>(context, listen: false);
     final projectRepo = Provider.of<ProjectRepository>(context, listen: false);
     
-    // ✅ Переключаем pin
     documentRepo.togglePin(doc);
     
-    // ✅ Уведомляем ProjectRepository для обновления UI списка
     projectRepo.notifyListeners();
   }
 }

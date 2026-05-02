@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../entities/project/project_repository.dart';
 import '../../entities/setting/setting_repository.dart';
 import '../../shared/ui/layouts/constrained_layout.dart';
 import '../../features/project/create_project.dart';

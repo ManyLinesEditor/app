@@ -81,13 +81,11 @@ class _QuillEditorWrapperState extends State<QuillEditorWrapper> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // ✅ Получаем isDarkMode из SettingRepository
     final isDarkMode = context.watch<SettingRepository>().isDarkMode;
 
     return GestureDetector(
       onPanEnd: (details) {
         if (details.velocity.pixelsPerSecond.dx < -500) {
-          // Handle swipe left for glossary
         }
       },
       child: Column(

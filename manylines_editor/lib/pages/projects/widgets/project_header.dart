@@ -1,5 +1,3 @@
-// lib/pages/projects/widgets/project_header.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../entities/setting/setting_repository.dart';
@@ -25,7 +23,6 @@ class ProjectHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // ✅ Логотип PNG
           Padding(
             padding: const EdgeInsets.only(left: 16),
             child: Image.asset(
@@ -39,16 +36,15 @@ class ProjectHeader extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           
-          // ✅ Название приложения
           Text(
             'Manylines',
             style: TextStyle(
-              fontFamily: 'LT Remark',  // ✅ Шрифт заголовков
+              fontFamily: 'LT Remark',
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: isDarkMode 
                   ? Colors.white 
-                  : const Color(0xFF603D2E),  // ✅ Коричневый
+                  : const Color(0xFF603D2E),
             ),
           ),
         ],

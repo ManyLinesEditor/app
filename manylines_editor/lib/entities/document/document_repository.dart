@@ -12,17 +12,14 @@ class DocumentRepository extends ChangeNotifier {
   AppDocument? _secondSelectedDocument;
   String? _selectedTextForGlossary;
   
-  // ✅ Хранилище контроллеров редакторов
   final Map<String, quill.QuillController> _controllers = {};
 
   DocumentRepository(this._projectRepo);
 
-  // ✅ Геттеры
   AppDocument? get selectedDocument => _selectedDocument;
   AppDocument? get secondSelectedDocument => _secondSelectedDocument;
   String? get selectedTextForGlossary => _selectedTextForGlossary;
 
-  // ✅ Создание нового документа
   AppDocument createDocument({
     required String name,
     required Delta content,
@@ -36,7 +33,6 @@ class DocumentRepository extends ChangeNotifier {
     );
   }
 
-  // ✅ Получение или создание контроллера для документа
   quill.QuillController getOrCreateController(AppDocument document) {
     if (_controllers.containsKey(document.id)) {
       return _controllers[document.id]!;
@@ -47,7 +43,6 @@ class DocumentRepository extends ChangeNotifier {
       selection: const TextSelection.collapsed(offset: 0),
     );
     
-    // Сохраняем изменения в документ
     controller.changes.listen((change) {
       document.content = controller.document.toDelta();
     });
@@ -56,7 +51,6 @@ class DocumentRepository extends ChangeNotifier {
     return controller;
   }
 
-  // ✅ Очистка контроллера (при удалении документа)
   void disposeController(String documentId) {
     final controller = _controllers[documentId];
     if (controller != null) {
@@ -65,7 +59,6 @@ class DocumentRepository extends ChangeNotifier {
     }
   }
 
-  // ✅ Очистка всех контроллеров (при закрытии приложения)
   void disposeAll() {
     for (var controller in _controllers.values) {
       controller.dispose();
@@ -77,7 +70,6 @@ class DocumentRepository extends ChangeNotifier {
     disposeController(documentId);
   }
   
-  // ✅ Выбор документа
   void selectDocument(AppDocument document) {
     _selectedDocument = document;
     incrementViewCount(document);
@@ -90,7 +82,6 @@ class DocumentRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Закрытие редакторов
   void closeFirstEditor() {
     _selectedDocument = null;
     notifyListeners();
@@ -107,19 +98,16 @@ class DocumentRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Счётчик просмотров
   void incrementViewCount(AppDocument doc) {
     doc.viewCount++;
     notifyListeners();
   }
 
-  // ✅ Pin документа
   void togglePin(AppDocument doc) {
     doc.isPinned = !doc.isPinned;
     notifyListeners();
   }
 
-  // ✅ Изменение иерархии (indent/outdent)
   void indentDocument(String documentId, String parentId) {
     final project = _projectRepo.selectedProject;
     if (project == null) return;

@@ -1,5 +1,3 @@
-// lib/pages/workspace/workspace_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../entities/document/document_repository.dart';
@@ -90,7 +88,6 @@ class _MobileEmptyState extends StatelessWidget {
   }
 }
 
-// ✅ Основная функция построения десктоп-лейаута
 Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) {
   final settingState = context.watch<SettingRepository>();
   final documentState = context.watch<DocumentRepository>();
@@ -107,14 +104,12 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
   final isGlossaryOpen = projectState.isGlossaryPanelOpen;
   
   return Scaffold(
-    // ✅ Верхняя панель
     appBar: PreferredSize(
       preferredSize: const Size.fromHeight(60),
       child: const ProjectTopBar(),
     ),
     body: Row(
       children: [
-        // ✅ Левая панель (Side Panel)
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
@@ -132,7 +127,6 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
               : const SidePanel(),
         ),
         
-        // ✅ Вкладка для сворачивания/разворачивания левой панели
         Container(
           width: 24,
           decoration: BoxDecoration(
@@ -167,16 +161,13 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
           ),
         ),
         
-        // ✅ Редакторы
         Expanded(
           child: showTwoEditors
               ? _buildTwoEditorsLayout(context, borderColor, textColor)
               : _buildSingleEditorLayout(context, selectedDocument, textColor, isDarkMode),
         ),
         
-        // ✅ Вкладки глоссария
         if (isGlossaryOpen) ...[
-          // ✅ Вкладка для ЗАКРЫТИЯ глоссария
           Container(
             width: 24,
             decoration: BoxDecoration(
@@ -212,7 +203,6 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
           ),
           const GlossaryPanel(),
         ] else
-          // ✅ Вкладка для ОТКРЫТИЯ глоссария
           Container(
             width: 24,
             decoration: BoxDecoration(
@@ -249,7 +239,6 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
       ],
     ),
 
-    // ✅ FAB для создания документа
     bottomNavigationBar: Container(
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB),
@@ -300,7 +289,6 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
   );
 }
 
-// ✅ _buildSingleEditorLayout
 Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocument, Color textColor, bool isDarkMode) {
   if (selectedDocument == null) {
     return Container(
@@ -352,7 +340,6 @@ Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocum
           ],
         ),
       ),
-      // ✅ Обёртка с цветом фона редактора
       Expanded(
         child: Container(
           color: isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : const Color(0xFFFFEDEB),
@@ -366,10 +353,8 @@ Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocum
   );
 }
 
-// ✅ _buildTwoEditorsLayout
 Widget _buildTwoEditorsLayout(BuildContext context, Color borderColor, Color textColor) {
   final documentState = context.watch<DocumentRepository>();
-  // ✅ Добавляем isDarkMode
   final isDarkMode = context.watch<SettingRepository>().isDarkMode;
   
   return Row(
@@ -382,7 +367,6 @@ Widget _buildTwoEditorsLayout(BuildContext context, Color borderColor, Color tex
               child: Container(
                 decoration: BoxDecoration(
                   border: Border(right: BorderSide(color: borderColor)),
-                  // ✅ Добавляем цвет фона
                   color: isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : const Color(0xFFFFEDEB),
                 ),
                 child: documentState.selectedDocument != null
@@ -401,7 +385,6 @@ Widget _buildTwoEditorsLayout(BuildContext context, Color borderColor, Color tex
           children: [
             _buildEditorHeader(context, 2, textColor, documentState.secondSelectedDocument),
             Expanded(
-              // ✅ Обёртка с цветом фона для второго редактора
               child: Container(
                 color: isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : const Color(0xFFFFEDEB),
                 child: documentState.secondSelectedDocument != null
@@ -419,7 +402,6 @@ Widget _buildTwoEditorsLayout(BuildContext context, Color borderColor, Color tex
   );
 }
 
-// ✅ _buildEditorHeader
 Widget _buildEditorHeader(BuildContext context, int index, Color textColor, AppDocument? doc) {
   final isDarkMode = context.watch<SettingRepository>().isDarkMode;
   return Container(

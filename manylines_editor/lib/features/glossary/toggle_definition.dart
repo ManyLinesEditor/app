@@ -7,10 +7,8 @@ class ToggleGlossaryDefinitionFeature {
     BuildContext context, 
     String definitionId,
   ) {
-    // ✅ Используем ProjectRepository
     final repo = Provider.of<ProjectRepository>(context, listen: false);
     
-    // ✅ Переключаем активное определение (radio button)
     repo.toggleGlossaryDefinition(definitionId);
   }
 }

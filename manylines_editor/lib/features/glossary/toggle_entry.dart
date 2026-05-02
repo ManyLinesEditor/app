@@ -7,10 +7,8 @@ class ToggleGlossaryEntryFeature {
     BuildContext context, 
     String entryId,
   ) {
-    // ✅ Используем ProjectRepository
     final repo = Provider.of<ProjectRepository>(context, listen: false);
     
-    // ✅ Переключаем раскрытие термина (accordion)
     repo.toggleGlossaryEntry(entryId);
   }
 }

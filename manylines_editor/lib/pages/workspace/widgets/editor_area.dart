@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../entities/project/project_repository.dart';
 import '../../../entities/document/document_repository.dart';
 import '../../../entities/setting/setting_repository.dart';
 import '../../../widgets/quill_editor_wrapper.dart';
-import '../../../features/editor/open_editor.dart';
 import '../../../features/editor/close_editor.dart';
 
 class EditorArea extends StatelessWidget {

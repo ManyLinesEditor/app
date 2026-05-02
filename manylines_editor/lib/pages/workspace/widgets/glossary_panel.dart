@@ -1,27 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../entities/document/document_repository.dart';
-import '../../../entities/glossary_entry/glossary_entry.dart';
 import '../../../entities/project/project_repository.dart';
 import '../../../entities/setting/setting_repository.dart';
 import '../../../features/glossary/add_entry.dart';
-import '../../../features/glossary/edit_entry.dart';
-import '../../../features/glossary/delete_entry.dart';
-import '../../../features/glossary/toggle_entry.dart';
 import 'glossary_entry_tile.dart';
 
 class GlossaryPanel extends StatelessWidget {
   const GlossaryPanel({super.key});
 
-// lib/pages/workspace/widgets/glossary_panel.dart
-
   @override
   Widget build(BuildContext context) {
-    final projectState = context.watch<ProjectRepository>();  // ✅ Из ProjectRepository
+    final projectState = context.watch<ProjectRepository>();
     final settingState = context.watch<SettingRepository>();
     
-    final project = projectState.selectedProject;  // ✅ Проект
-    final glossary = project?.glossary ?? [];  // ✅ Глоссарий проекта
+    final project = projectState.selectedProject;
+    final glossary = project?.glossary ?? [];
     final isDarkMode = settingState.isDarkMode;
     final textColor = isDarkMode ? Colors.white : Colors.black87;
     final borderColor = isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;

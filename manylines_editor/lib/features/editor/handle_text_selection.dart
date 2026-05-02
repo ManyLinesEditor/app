@@ -22,11 +22,9 @@ class HandleTextSelectionFeature {
     final selectedText = text.substring(start, end);
     
     if (selectedText.trim().isNotEmpty) {
-      // ✅ Сохраняем выделенный текст в DocumentRepository
       final documentRepo = Provider.of<DocumentRepository>(context, listen: false);
       documentRepo.setSelectedTextForGlossary(selectedText.trim());
       
-      // ✅ Открываем панель глоссария через ProjectRepository
       final projectRepo = Provider.of<ProjectRepository>(context, listen: false);
       projectRepo.openGlossaryPanel();
     }

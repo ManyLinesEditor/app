@@ -139,7 +139,6 @@ class SidePanel extends StatelessWidget {
   }
 }
 
-// ✅ СПИСОК ДОКУМЕНТОВ
 class _DocumentsList extends StatelessWidget {
   const _DocumentsList();
   
@@ -256,6 +255,54 @@ class _DocumentsList extends StatelessWidget {
     );
   }
 
+  void _showDeleteMenu(BuildContext context, AppDocument doc) {
+    final isDarkMode = context.read<SettingRepository>().isDarkMode;
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB),
+        title: Text(
+          'Удалить документ?',
+          style: TextStyle(
+            fontFamily: 'Ostrovsky',
+            color: isDarkMode ? Colors.white : const Color(0xFFB07156),
+          ),
+        ),
+        content: Text(
+          'Документ "${doc.name}" будет удалён без возможности восстановления.',
+          style: TextStyle(
+            fontFamily: 'Ostrovsky',
+            color: isDarkMode ? Colors.white70 : const Color(0xFFB07156),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Отмена',
+              style: TextStyle(
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              DeleteDocumentFeature.execute(context, doc);
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
+    );
+  }
+
+
   Widget _buildDismissibleList(Project project, List<AppDocument> docs, BuildContext context) {
     final isDarkMode = context.watch<SettingRepository>().isDarkMode;
 
@@ -266,7 +313,6 @@ class _DocumentsList extends StatelessWidget {
         final isSelected = context.watch<DocumentRepository>().selectedDocument?.id == doc.id;
         final actualIndex = project.documents.indexOf(doc);
 
-        // ✅ Правильная нумерация на основе позиции
         String number;
         int rootCount = 0;
         int childCount = 0;
@@ -359,7 +405,7 @@ class _DocumentsList extends StatelessWidget {
                     onTap: () {},
                     child: Checkbox(
                       value: doc.isPinned,
-                      activeColor: const Color.fromARGB(255, 255, 0, 0),
+                      activeColor: const Color.fromARGB(255, 92, 34, 110),
                       onChanged: (value) {
                         TogglePinFeature.execute(context, doc);
                       },
@@ -388,13 +434,8 @@ class _DocumentsList extends StatelessWidget {
       },
     );
   }
-
-  void _showDeleteMenu(BuildContext context, AppDocument doc) {
-    DeleteDocumentFeature.showConfirmation(context, doc);
-  }
 }
 
-// ✅ ГРАФОВОЕ ПРЕДСТАВЛЕНИЕ с правильным InteractiveViewer
 class _DocumentsGraph extends StatelessWidget {
   const _DocumentsGraph();
 
@@ -408,7 +449,6 @@ class _DocumentsGraph extends StatelessWidget {
 
     return Column(
       children: [
-        // ✅ Список pinned документов сверху
         if (pinnedDocs.isNotEmpty)
           Container(
             color: isDarkMode ? const Color(0xFF000000) : Color(0xFFAB73D3),
@@ -498,7 +538,6 @@ class _DocumentsGraph extends StatelessWidget {
             ),
           ),
         
-        // ✅ Граф с InteractiveViewer (без SingleChildScrollView)
         Expanded(
           child: docs.isEmpty
               ? Center(
@@ -512,12 +551,12 @@ class _DocumentsGraph extends StatelessWidget {
                   ),
                 )
               : InteractiveViewer(
-                  constrained: false,  // ✅ Разрешаем свободное перемещение
-                  minScale: 0.1,  // ✅ Можно отдалить до 10%
-                  maxScale: 3.0,  // ✅ Можно приблизить до 300%
-                  panEnabled: true,  // ✅ Включена прокрутка
-                  scaleEnabled: true,  // ✅ Включен зум
-                  boundaryMargin: const EdgeInsets.all(1000),  // ✅ Большая область для прокрутки
+                  constrained: false,
+                  minScale: 0.1,
+                  maxScale: 3.0,
+                  panEnabled: true,
+                  scaleEnabled: true,
+                  boundaryMargin: const EdgeInsets.all(1000),
                   child: Container(
                     color: isDarkMode ? Colors.grey[900] : Color.fromARGB(255, 255, 245, 244),
                     child: Center(
@@ -541,7 +580,6 @@ class _DocumentsGraph extends StatelessWidget {
     );
   }
 
-  // ✅ Узел проекта
   Widget _buildProjectNode(Project project, bool isDarkMode, BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
@@ -584,14 +622,13 @@ class _DocumentsGraph extends StatelessWidget {
     );
   }
 
-  // ✅ Корневые документы в ряд
   Widget _buildRootDocuments(List<AppDocument> docs, bool isDarkMode, BuildContext context) {
     final rootDocs = docs.where((d) => d.parentId == null).toList();
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,  // ✅ Ограничиваем размер
+      mainAxisSize: MainAxisSize.min,
       children: rootDocs.map((doc) => 
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -601,7 +638,6 @@ class _DocumentsGraph extends StatelessWidget {
     );
   }
 
-  // ✅ Колонка документа с поддокументами
   Widget _buildDocumentColumn(
     AppDocument doc, 
     List<AppDocument> allDocs, 
@@ -650,7 +686,6 @@ class _DocumentsGraph extends StatelessWidget {
     );
   }
 
-  // ✅ Узел документа
   Widget _buildDocumentNode(AppDocument doc, bool isDarkMode, BuildContext context) {
     final isSelected = context.watch<DocumentRepository>().selectedDocument?.id == doc.id;
 
