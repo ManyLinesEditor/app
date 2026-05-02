@@ -11,6 +11,7 @@ import '../../../features/document/toggle_pin.dart';
 import '../../../features/document/indent_document.dart';
 import '../../../features/document/outdent_document.dart';
 
+
 class SidePanel extends StatelessWidget {
   const SidePanel({super.key});
 
@@ -18,47 +19,71 @@ class SidePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final projectState = context.watch<ProjectRepository>();
     final settingState = context.watch<SettingRepository>();
+    final isDarkMode = context.watch<SettingRepository>().isDarkMode;
     final isPanelCollapsed = settingState.isSidePanelCollapsed;
+    final isGraphView = projectState.isGraphView;
     
-    final leftPanelBg = settingState.isDarkMode ? Colors.grey[900] : Colors.white;
-    final headerBg = settingState.isDarkMode ? Colors.green[900] : Colors.green[50];
+    final leftPanelBg = settingState.isDarkMode ? Colors.grey[900] : Color.fromARGB(255, 255, 245, 244);
+    final headerBg = settingState.isDarkMode ? Color.fromARGB(255, 0, 0, 0) : Color(0xFFFFEDEB);
     final textColor = settingState.isDarkMode ? Colors.white : Colors.black87;
-    final borderColor = settingState.isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
+    final borderColor = settingState.isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E);
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      width: isPanelCollapsed ? 0 : 300,
+  duration: const Duration(milliseconds: 300),
+  curve: Curves.easeInOut,
+  width: isPanelCollapsed 
+      ? 0 
+      : (isGraphView ? 800 : 300),
       decoration: BoxDecoration(
-        border: Border(right: BorderSide(color: borderColor)),
+        border: Border(
+          right: BorderSide(
+            color: borderColor,
+            width: 2,
+          ),
+        ),
       ),
       child: isPanelCollapsed
           ? const SizedBox.shrink()
           : Column(
               children: [
                 Container(
+                  decoration: BoxDecoration(
+                    color: headerBg,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E),
+                        width: 3,
+                      ),
+                    ),
+                  ),
                   padding: const EdgeInsets.all(16),
-                  color: headerBg,
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back),
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E),
+                        ),
                         onPressed: () => projectState.clearSelectedProject(),
                         tooltip: 'Back to projects',
                       ),
                       Expanded(
                         child: Text(
                           projectState.selectedProject?.name ?? '',
-                          style: TextStyle(color: textColor),
+                          style: TextStyle(
+                            fontSize: 18, 
+                            fontFamily: 'Ostrovsky',
+                            color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : const Color.fromARGB(255, 0, 0, 0),
+                          ),
                         ),
                       ),
                       IconButton(
                         icon: Icon(
-                          settingState.isGraphView ? Icons.list : Icons.account_tree,
-                          color: textColor,
+                          projectState.isGraphView ? Icons.list : Icons.account_tree,
+                          color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E),
                         ),
-                        onPressed: () => settingState.toggleViewMode(),
-                        tooltip: settingState.isGraphView ? 'Список' : 'Граф',
+                        onPressed: () => projectState.toggleViewMode(),
+                        tooltip: projectState.isGraphView ? 'Список' : 'Граф',
                       ),
                     ],
                   ),
@@ -69,7 +94,7 @@ class SidePanel extends StatelessWidget {
                     child: Column(
                       children: [
                         Expanded(
-                          child: Selector<SettingRepository, bool>(
+                          child: Selector<ProjectRepository, bool>(
                             selector: (_, state) => state.isGraphView,
                             builder: (context, isGraphView, _) {
                               return isGraphView 
@@ -81,7 +106,12 @@ class SidePanel extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            border: Border(top: BorderSide(color: borderColor)),
+                            border: Border(
+                              top: BorderSide(
+                                color: borderColor,
+                                width: 2,
+                              ),
+                            ),
                           ),
                           child: SizedBox(
                             width: double.infinity,
@@ -91,9 +121,9 @@ class SidePanel extends StatelessWidget {
                               label: const Text('Новый документ'),
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 12),
-                                foregroundColor: settingState.isDarkMode ? Colors.white : Colors.green[700],
+                                foregroundColor: settingState.isDarkMode ? Colors.green[700] : Color(0xFFAB73D3),
                                 side: BorderSide(
-                                  color: settingState.isDarkMode ? Colors.green[400]! : Colors.green[700]!,
+                                  color: settingState.isDarkMode ? Colors.green[400]! : Color(0xFFAB73D3),
                                 ),
                               ),
                             ),
@@ -117,8 +147,6 @@ class _DocumentsList extends StatelessWidget {
     final projectState = context.watch<ProjectRepository>();
     final project = projectState.selectedProject;
     
-    context.watch<DocumentRepository>();
-    
     if (project == null) {
       return const Center(child: Text('Нет проекта'));
     }
@@ -131,7 +159,7 @@ class _DocumentsList extends StatelessWidget {
       children: [
         if (pinnedDocs.isNotEmpty)
           Container(
-            color: isDarkMode ? Colors.green[900]!.withOpacity(0.3) : Colors.green[50],
+            color: isDarkMode ? Color(0xFF16DB93) : Color(0xFF662C90),
             child: ReorderableListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -146,7 +174,8 @@ class _DocumentsList extends StatelessWidget {
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                        color: isDarkMode ? Colors.green[700]! : Colors.green[200]!,
+                        color: isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFFFFEDEB),
+                        width: 7,
                       ),
                     ),
                   ),
@@ -160,7 +189,7 @@ class _DocumentsList extends StatelessWidget {
                           '${index + 1}.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.green[700],
+                            color: Color(0xFFFFEDEB),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -168,11 +197,17 @@ class _DocumentsList extends StatelessWidget {
                         Icon(
                           Icons.push_pin,
                           size: 16,
-                          color: Colors.green[700],
+                          color: Color(0xFFFFEDEB),
                         ),
                       ],
                     ),
-                    title: Text(doc.name),
+                    title: Text(doc.name,
+                      style: TextStyle(
+                        fontSize: 14, 
+                        fontFamily: 'Ostrovsky',
+                        color: isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFFFFEDEB),
+                        ),
+                      ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -180,7 +215,7 @@ class _DocumentsList extends StatelessWidget {
                           onTap: () {},
                           child: Checkbox(
                             value: doc.isPinned,
-                            activeColor: Colors.green[700],
+                            activeColor: Color.fromARGB(255, 211, 198, 197),
                             onChanged: (value) {
                               TogglePinFeature.execute(context, doc);
                             },
@@ -212,13 +247,61 @@ class _DocumentsList extends StatelessWidget {
           ),
         Expanded(
           child: Container(
-            color: isDarkMode ? Colors.blue[900]!.withOpacity(0.2) : Colors.blue[50],
+            color: isDarkMode ? Color.fromARGB(255, 0, 0, 0) : Color(0xFFFFEDEB),
             child: _buildDismissibleList(project, unpinnedDocs, context),
           ),
         ),
       ],
     );
   }
+
+  void _showDeleteMenu(BuildContext context, AppDocument doc) {
+    final isDarkMode = context.read<SettingRepository>().isDarkMode;
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB),
+        title: Text(
+          'Удалить документ?',
+          style: TextStyle(
+            fontFamily: 'Ostrovsky',
+            color: isDarkMode ? Colors.white : const Color(0xFFB07156),
+          ),
+        ),
+        content: Text(
+          'Документ "${doc.name}" будет удалён без возможности восстановления.',
+          style: TextStyle(
+            fontFamily: 'Ostrovsky',
+            color: isDarkMode ? Colors.white70 : const Color(0xFFB07156),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Отмена',
+              style: TextStyle(
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              DeleteDocumentFeature.execute(context, doc);
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildDismissibleList(Project project, List<AppDocument> docs, BuildContext context) {
     final isDarkMode = context.watch<SettingRepository>().isDarkMode;
@@ -253,13 +336,13 @@ class _DocumentsList extends StatelessWidget {
           key: ValueKey(doc.id),
           direction: DismissDirection.horizontal,
           background: Container(
-            color: Colors.blue,
+            color: isDarkMode ? Color.fromARGB(237, 88, 83, 83) : Color.fromARGB(238, 213, 195, 194),
             alignment: Alignment.centerLeft,
             padding: const EdgeInsets.only(left: 16),
             child: const Icon(Icons.arrow_back, color: Colors.white),
           ),
           secondaryBackground: Container(
-            color: Colors.green,
+            color: isDarkMode ? Color.fromARGB(237, 88, 83, 83) : Color.fromARGB(238, 213, 195, 194),
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 16),
             child: const Icon(Icons.arrow_forward, color: Colors.white),
@@ -275,13 +358,13 @@ class _DocumentsList extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               color: doc.parentId == null
-                  ? (isDarkMode ? Colors.blue[900]!.withOpacity(0.2) : Colors.blue[50])
-                  : (isDarkMode ? Colors.green[900]!.withOpacity(0.3) : Colors.green[50]),
+                  ? (isDarkMode ? const Color.fromARGB(255, 36, 153, 60) : Color(0xFFAB73D3))
+                  : (isDarkMode ? const Color.fromARGB(255, 104, 196, 110) : Color.fromARGB(255, 205, 164, 234)),
               border: Border(
                 bottom: BorderSide(
                   color: isDarkMode
-                      ? (doc.parentId == null ? Colors.blue[700]! : Colors.green[700]!)
-                      : (doc.parentId == null ? Colors.blue[200]! : Colors.green[200]!),
+                      ? (doc.parentId == null ? const Color.fromARGB(255, 0, 0, 0) : const Color.fromARGB(255, 0, 0, 0))
+                      : (doc.parentId == null ? Color(0xFFFFEDEB) : Color(0xFFFFEDEB)),
                 ),
               ),
             ),
@@ -295,7 +378,7 @@ class _DocumentsList extends StatelessWidget {
                     number,
                     style: TextStyle(
                       fontSize: 12,
-                      color: doc.parentId == null ? Colors.blue[700] : Colors.green[700],
+                      color: doc.parentId == null ? const Color.fromARGB(255, 255, 255, 255) : const Color.fromARGB(255, 255, 255, 255),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -303,12 +386,18 @@ class _DocumentsList extends StatelessWidget {
                   Icon(
                     doc.parentId == null ? Icons.insert_drive_file : Icons.subdirectory_arrow_right,
                     size: 16,
-                    color: doc.parentId == null ? Colors.blue[700] : Colors.green[700],
+                    color: doc.parentId == null ? const Color.fromARGB(255, 255, 255, 255) : const Color.fromARGB(255, 255, 255, 255),
                   ),
                 ],
               ),
-              title: Text(doc.name),
-              subtitle: doc.parentId != null ? Text('Поддокумент', style: TextStyle(fontSize: 10, color: Colors.grey[600])) : null,
+              title: Text(doc.name,
+                style: TextStyle(
+                  fontSize: 14, 
+                  fontFamily: 'Ostrovsky',
+                  color: isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFFFFEDEB),
+                ),
+              ),
+              subtitle: doc.parentId != null ? Text('Поддокумент', style: TextStyle(fontSize: 12, color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : const Color(0xFFFFEDEB))) : null,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -316,7 +405,7 @@ class _DocumentsList extends StatelessWidget {
                     onTap: () {},
                     child: Checkbox(
                       value: doc.isPinned,
-                      activeColor: Colors.green[700],
+                      activeColor: const Color.fromARGB(255, 92, 34, 110),
                       onChanged: (value) {
                         TogglePinFeature.execute(context, doc);
                       },
@@ -345,10 +434,6 @@ class _DocumentsList extends StatelessWidget {
       },
     );
   }
-
-  void _showDeleteMenu(BuildContext context, AppDocument doc) {
-    DeleteDocumentFeature.showConfirmation(context, doc);
-  }
 }
 
 class _DocumentsGraph extends StatelessWidget {
@@ -360,126 +445,238 @@ class _DocumentsGraph extends StatelessWidget {
     final project = projectState.selectedProject;
     final docs = project?.documents ?? [];
     final isDarkMode = context.watch<SettingRepository>().isDarkMode;
+    final pinnedDocs = project?.pinnedDocuments ?? [];
 
-    if (docs.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.account_tree_outlined, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text('Нет документов', style: TextStyle(color: Colors.grey[600])),
-          ],
+    return Column(
+      children: [
+        if (pinnedDocs.isNotEmpty)
+          Container(
+            color: isDarkMode ? const Color(0xFF000000) : Color(0xFFAB73D3),
+            child: ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: pinnedDocs.length,
+              onReorder: (oldIndex, newIndex) => projectState.reorderPinnedDocuments(oldIndex, newIndex),
+              itemBuilder: (context, index) {
+                final doc = pinnedDocs[index];
+                final isSelected = context.watch<DocumentRepository>().selectedDocument?.id == doc.id;
+                
+                return Container(
+                  key: ValueKey(doc.id),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: isDarkMode ? Colors.green[700]! : Color(0xFFFFEDEB),
+                        width: 7,
+                      ),
+                    ),
+                  ),
+                  child: ListTile(
+                    selected: isSelected,
+                    selectedTileColor: Theme.of(context).colorScheme.secondaryContainer,
+                    leading: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${index + 1}.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : Color(0xFFFFEDEB),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.push_pin,
+                          size: 16,
+                          color: isDarkMode ? Colors.green[700] : Color(0xFFFFEDEB),
+                        ),
+                      ],
+                    ),
+                    title: Text(doc.name,
+                    style: TextStyle(
+                      fontSize: 14, 
+                      fontFamily: 'Ostrovsky',
+                      color: isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFFFFEDEB),
+                      ),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () {},
+                          child: Checkbox(
+                            value: doc.isPinned,
+                            activeColor: Color.fromARGB(255, 211, 198, 197),
+                            onChanged: (value) {
+                              TogglePinFeature.execute(context, doc);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          icon: const Icon(Icons.more_vert, size: 20),
+                          onPressed: () => _showDeleteMenu(context, doc),
+                          tooltip: 'Меню',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                        Icon(
+                          Icons.drag_handle,
+                          color: isDarkMode ? Colors.white54 : Colors.grey,
+                        ),
+                      ],
+                    ),
+                    onTap: () {
+                      final repo = context.read<DocumentRepository>();
+                      repo.selectDocument(doc);
+                    },
+                    onLongPress: () => context.read<DocumentRepository>().selectSecondDocument(doc),
+                  ),
+                );
+              },
+            ),
+          ),
+        
+        Expanded(
+          child: docs.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.account_tree_outlined, size: 64, color: Colors.grey[400]),
+                      const SizedBox(height: 16),
+                      Text('Нет документов', style: TextStyle(color: Colors.grey[600])),
+                    ],
+                  ),
+                )
+              : InteractiveViewer(
+                  constrained: false,
+                  minScale: 0.1,
+                  maxScale: 3.0,
+                  panEnabled: true,
+                  scaleEnabled: true,
+                  boundaryMargin: const EdgeInsets.all(1000),
+                  child: Container(
+                    color: isDarkMode ? Colors.grey[900] : Color.fromARGB(255, 255, 245, 244),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(60),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            _buildProjectNode(project!, isDarkMode, context),
+                            const SizedBox(height: 60),
+                            _buildRootDocuments(docs, isDarkMode, context),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
         ),
-      );
-    }
+      ],
+    );
+  }
 
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ..._buildDocumentNodes(docs, context),
-          ],
+  Widget _buildProjectNode(Project project, bool isDarkMode, BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDarkMode 
+              ? [Colors.purple[900]!, Colors.purple[700]!]
+              : [Colors.purple[400]!, Colors.purple[200]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        border: Border.all(
+          color: isDarkMode ? Colors.purple[400]! : Colors.purple[600]!,
+          width: 3,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.purple.withOpacity(0.4),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.folder, size: 32, color: Colors.white),
+          const SizedBox(width: 16),
+          Text(
+            project.name,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  List<Widget> _buildDocumentNodes(List<AppDocument> docs, BuildContext context) {
-    final widgets = <Widget>[];
+  Widget _buildRootDocuments(List<AppDocument> docs, bool isDarkMode, BuildContext context) {
     final rootDocs = docs.where((d) => d.parentId == null).toList();
 
-    for (var doc in rootDocs) {
-      widgets.add(_buildDocumentNode(doc, docs, context));
-      widgets.add(const SizedBox(height: 20));
-    }
-
-    return widgets;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: rootDocs.map((doc) => 
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: _buildDocumentColumn(doc, docs, isDarkMode, context),
+        )
+      ).toList(),
+    );
   }
 
-  Widget _buildDocumentNode(AppDocument doc, List<AppDocument> allDocs, BuildContext context) {
-    final isSelected = context.watch<DocumentRepository>().selectedDocument?.id == doc.id;
+  Widget _buildDocumentColumn(
+    AppDocument doc, 
+    List<AppDocument> allDocs, 
+    bool isDarkMode, 
+    BuildContext context
+  ) {
     final children = allDocs.where((d) => d.parentId == doc.id).toList();
-    final isDarkMode = context.watch<SettingRepository>().isDarkMode;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        GestureDetector(
-          onTap: () {
-            final repo = context.read<DocumentRepository>();
-            repo.selectDocument(doc);
-          },
-          onLongPress: () => context.read<DocumentRepository>().selectSecondDocument(doc),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? (isDarkMode ? Colors.green[800] : Colors.green[100])
-                  : (isDarkMode ? Colors.grey[800] : Colors.white),
-              border: Border.all(
-                color: isSelected
-                    ? Colors.green[700]!
-                    : (isDarkMode ? Colors.grey[600]! : Colors.grey[400]!),
-                width: 2,
-              ),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  doc.isPinned ? Icons.push_pin : Icons.insert_drive_file,
-                  color: isSelected ? Colors.green[700] : Colors.grey[600],
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  doc.name,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isDarkMode ? Colors.white : Colors.black87,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.more_vert, size: 18),
-                  onPressed: () => _showDeleteMenuInGraph(context, doc),
-                  tooltip: 'Меню',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-          ),
-        ),
-
+        _buildDocumentNode(doc, isDarkMode, context),
+        
         if (children.isNotEmpty) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           ...children.asMap().entries.map((entry) {
             final childDoc = entry.value;
+            final isLast = entry.key == children.length - 1;
             return Padding(
-              padding: const EdgeInsets.only(left: 40),
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    children: [
-                      Container(width: 30, height: 2, color: isDarkMode ? Colors.grey[600] : Colors.grey[400]),
-                      Icon(Icons.arrow_forward, size: 16, color: isDarkMode ? Colors.grey[600] : Colors.grey[400]),
-                    ],
+                  Container(
+                    width: 2,
+                    height: 20,
+                    color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
                   ),
-                  const SizedBox(height: 8),
-                  _buildDocumentNode(childDoc, allDocs, context),
+                  Icon(
+                    Icons.arrow_downward,
+                    size: 16,
+                    color: isDarkMode ? Colors.grey[600] : Colors.grey[400],
+                  ),
+                  const SizedBox(height: 6),
+                  _buildDocumentNode(childDoc, isDarkMode, context),
+                  if (allDocs.any((d) => d.parentId == childDoc.id)) ...[
+                    const SizedBox(height: 12),
+                    _buildDocumentColumn(childDoc, allDocs, isDarkMode, context),
+                  ],
                 ],
               ),
             );
@@ -489,7 +686,60 @@ class _DocumentsGraph extends StatelessWidget {
     );
   }
 
-  void _showDeleteMenuInGraph(BuildContext context, AppDocument doc) {
+  Widget _buildDocumentNode(AppDocument doc, bool isDarkMode, BuildContext context) {
+    final isSelected = context.watch<DocumentRepository>().selectedDocument?.id == doc.id;
+
+    return GestureDetector(
+      onTap: () {
+        final repo = context.read<DocumentRepository>();
+        repo.selectDocument(doc);
+      },
+      onLongPress: () => context.read<DocumentRepository>().selectSecondDocument(doc),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDarkMode ? Colors.green[800] : Colors.green[100])
+              : (isDarkMode ? Colors.grey[800] : Colors.white),
+          border: Border.all(
+            color: isSelected
+                ? Colors.green[700]!
+                : (isDarkMode ? Colors.grey[600]! : Colors.grey[400]!),
+            width: 2,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              doc.isPinned ? Icons.push_pin : Icons.insert_drive_file,
+              color: isSelected ? Colors.green[700] : Colors.grey[600],
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              doc.name,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteMenu(BuildContext context, AppDocument doc) {
     DeleteDocumentFeature.showConfirmation(context, doc);
   }
 }

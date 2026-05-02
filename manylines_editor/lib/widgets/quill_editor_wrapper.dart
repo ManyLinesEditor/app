@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:provider/provider.dart';
-import '../entities/document/document.dart';
 import '../entities/document/document_repository.dart';
-import '../entities/glossary_entry/glossary_entry.dart';
-import '../features/editor/handle_text_selection.dart';
+import '../entities/document/document.dart';
+import '../entities/project/project_repository.dart';
+import '../entities/setting/setting_repository.dart';
 
 class QuillEditorWrapper extends StatefulWidget {
   final AppDocument document;
@@ -32,7 +32,6 @@ class _QuillEditorWrapperState extends State<QuillEditorWrapper> {
   @override
   void didUpdateWidget(QuillEditorWrapper oldWidget) {
     super.didUpdateWidget(oldWidget);
-
     if (oldWidget.document.id != widget.document.id) {
       _initializeController();
     }
@@ -44,25 +43,13 @@ class _QuillEditorWrapperState extends State<QuillEditorWrapper> {
   }
 
   void _addSelectedToGlossary() {
-  print('🔍 _addSelectedToGlossary вызван');
-  
-  final selectedText = _getSelectedText();
-  print('🔍 Выделенный текст: $selectedText');
-  
-  if (selectedText != null) {
-    print('🔍 Добавляем термин: $selectedText');
-    print('🔍 Document ID: ${widget.document.id}');
-    
-    final repo = context.read<DocumentRepository>();
-    repo.addGlossaryEntry(widget.document.id, selectedText);
-    
-    print('✅ Термин добавлен');
-    print('Открываем Глоссарий');
-    repo.openGlossaryPanel();
-  } else {
-    print('❌ Текст не выделен');
+    final selectedText = _getSelectedText();
+    if (selectedText != null) {
+      final projectRepo = context.read<ProjectRepository>();
+      projectRepo.addGlossaryEntry(selectedText, '');
+      projectRepo.openGlossaryPanel();
+    }
   }
-}
 
   String? _getSelectedText() {
     if (_controller == null) return null;
@@ -94,10 +81,11 @@ class _QuillEditorWrapperState extends State<QuillEditorWrapper> {
       return const Center(child: CircularProgressIndicator());
     }
 
+    final isDarkMode = context.watch<SettingRepository>().isDarkMode;
+
     return GestureDetector(
       onPanEnd: (details) {
         if (details.velocity.pixelsPerSecond.dx < -500) {
-          HandleTextSelectionFeature.execute(context, _controller);
         }
       },
       child: Column(
@@ -126,7 +114,7 @@ class _QuillEditorWrapperState extends State<QuillEditorWrapper> {
                   icon: const Icon(Icons.book, size: 22),
                   onPressed: _addSelectedToGlossary,
                   tooltip: 'Добавить в глоссарий',
-                  color: Colors.blue[700],
+                  color: isDarkMode ? const Color(0xFFAB73D3) : const Color(0xFF16DB93),
                 ),
               ),
             ],

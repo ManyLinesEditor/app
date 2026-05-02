@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../entities/project/project_repository.dart';
 import '../../entities/setting/setting_repository.dart';
 import '../../shared/ui/layouts/constrained_layout.dart';
 import '../../features/project/create_project.dart';
@@ -43,15 +42,18 @@ class ProjectsPage extends StatelessWidget {
     final state = context.watch<SettingRepository>();
     final isDarkMode = state.isDarkMode;
     final textColor = isDarkMode ? Colors.white54 : Colors.black54;
-    final bgColor = isDarkMode 
-        ? const Color.fromARGB(255, 6, 58, 137) 
-        : Colors.blue[50];
+    final bgColor = isDarkMode ? const Color.fromARGB(255, 18, 157, 106) : const Color(0xFFAB73D3);
     
     return Container(
       color: bgColor,
       padding: const EdgeInsets.all(16),
       child: Center(
-        child: Text('Other Settings ...', style: TextStyle(color: textColor)),
+        child: Text(
+          'Other Settings ...',
+          style: TextStyle(
+            fontFamily: 'Ostrovsky',
+            color: textColor),
+          ),
       ),
     );
   }

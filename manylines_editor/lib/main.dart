@@ -6,11 +6,11 @@ import 'app/router.dart';
 import 'entities/setting/setting_repository.dart';
 
 void main() {
-  runApp(const ManyllinesApp());
+  runApp(const ManylinesApp());
 }
 
-class ManyllinesApp extends StatelessWidget {
-  const ManyllinesApp({super.key});
+class ManylinesApp extends StatelessWidget {
+  const ManylinesApp({super.key});
 
   @override
   Widget build(BuildContext context) {

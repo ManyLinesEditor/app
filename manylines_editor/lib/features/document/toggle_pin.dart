@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../entities/document/document.dart';
 import '../../entities/document/document_repository.dart';
+import '../../entities/project/project_repository.dart';
+
 
 class TogglePinFeature {
   static void execute(BuildContext context, AppDocument doc) {
-    final repo = Provider.of<DocumentRepository>(context, listen: false);
-    repo.togglePin(doc);
+    final documentRepo = Provider.of<DocumentRepository>(context, listen: false);
+    final projectRepo = Provider.of<ProjectRepository>(context, listen: false);
+    
+    documentRepo.togglePin(doc);
+    
+    projectRepo.notifyListeners();
   }
 }

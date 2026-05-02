@@ -12,9 +12,9 @@ class SettingsList extends StatelessWidget {
   Widget build(BuildContext context) {
     final settingState = context.watch<SettingRepository>();
     final isDarkMode = settingState.isDarkMode;
-    final bgColor = isDarkMode ? Colors.blue[900]! : Colors.blue[50]!;
-    final borderColor = isDarkMode ? Colors.blue[700]! : Colors.blue[200]!;
-    final textColor = isDarkMode ? Colors.white : Colors.black87;
+    final bgColor = isDarkMode ? Color.fromARGB(255, 7, 82, 54)! : Colors.blue[50]!;
+    final borderColor = isDarkMode ? Color.fromARGB(255, 12, 94, 64)! : Color(0xFF662C90)!;
+    final textColor = isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Colors.black87;
 
     if (settingState.switchableValue) {
       return ReorderableListView.builder(
@@ -30,9 +30,9 @@ class SettingsList extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildSettingHeader(setting, isExpanded, textColor, borderColor, context),
-              if (setting.id == 'setting1' && isExpanded) _buildDescriptionSection1(isDarkMode),
-              if (setting.id == 'setting2' && isExpanded) _buildDescriptionSection2(isDarkMode, context),
-              if (setting.id == 'setting3' && isExpanded) _buildDescriptionSection3(isDarkMode, context),
+              if (setting.id == 'setting1' && isExpanded) _buildDescriptionSection1(isDarkMode, borderColor, context),
+              if (setting.id == 'setting2' && isExpanded) _buildDescriptionSection2(isDarkMode, borderColor, context),
+              if (setting.id == 'setting3' && isExpanded) _buildDescriptionSection3(isDarkMode, borderColor, context),
             ],
           );
         },
@@ -50,9 +50,9 @@ class SettingsList extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildSettingHeader(setting, isExpanded, textColor, borderColor, context),
-              if (setting.id == 'setting1' && isExpanded) _buildDescriptionSection1(isDarkMode),
-              if (setting.id == 'setting2' && isExpanded) _buildDescriptionSection2(isDarkMode, context),
-              if (setting.id == 'setting3' && isExpanded) _buildDescriptionSection3(isDarkMode, context),
+              if (setting.id == 'setting1' && isExpanded) _buildDescriptionSection1(isDarkMode, borderColor, context),
+              if (setting.id == 'setting2' && isExpanded) _buildDescriptionSection2(isDarkMode, borderColor, context),
+              if (setting.id == 'setting3' && isExpanded) _buildDescriptionSection3(isDarkMode, borderColor, context),
             ],
           );
         },
@@ -64,8 +64,12 @@ class SettingsList extends StatelessWidget {
     dynamic setting, bool isExpanded, Color textColor, Color borderColor, BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: borderColor)),
-        color: context.watch<SettingRepository>().isDarkMode ? Colors.blue[800]! : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: borderColor,
+            width: 1),
+          ),
+        color: context.watch<SettingRepository>().isDarkMode ? const Color(0xFF16DB93) : Color(0xFFFFEDEB),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -88,35 +92,65 @@ class SettingsList extends StatelessWidget {
     );
   }
 
-  Widget _buildDescriptionSection1(bool isDarkMode) {
-    return Container(
-      color: isDarkMode ? Colors.grey[850]! : Colors.grey[50]!,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('Description', style: TextStyle(fontSize: 14, color: isDarkMode ? Colors.grey[300]! : Colors.grey[700]!)),
-          const SizedBox(height: 12),
-          Row(children: [
+  Widget _buildDescriptionSection1(bool isDarkMode, Color borderColor, BuildContext context) {
+  return Container(
+    decoration: BoxDecoration(
+      color: isDarkMode ? Colors.grey[850] : const Color(0xFFFFEDEB),
+      border: Border(
+        bottom: BorderSide(
+          color: borderColor,
+          width: 2),
+        ),
+    ),
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Description', 
+          style: TextStyle(
+            fontSize: 14, 
+            fontFamily: 'Ostrovsky',
+            color: isDarkMode ? const Color(0xFF16DB93) : const Color(0xFFAB73D3),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
             _buildOutlinedButton('A', isDarkMode),
             const SizedBox(width: 8),
             _buildOutlinedButton('B', isDarkMode),
             const SizedBox(width: 8),
             _buildOutlinedButton('C', isDarkMode),
-          ]),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      ],
+    ),
+  );
+}
 
-  Widget _buildDescriptionSection2(bool isDarkMode, BuildContext context) {
+  Widget _buildDescriptionSection2(bool isDarkMode, Color borderColor, BuildContext context) {
     return Container(
-      color: isDarkMode ? Colors.grey[850]! : Colors.grey[50]!,
+      decoration: BoxDecoration(
+      color: isDarkMode ? Colors.grey[850] : const Color(0xFFFFEDEB),
+      border: Border(
+        bottom: BorderSide(
+          color: borderColor,
+          width: 2),
+        ),
+    ),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Description', style: TextStyle(fontSize: 14, color: isDarkMode ? Colors.grey[300]! : Colors.grey[700]!)),
+          Text(
+            'Description',
+            style: TextStyle(
+              fontSize: 14,
+              fontFamily: 'Ostrovsky',
+              color: isDarkMode ? Color(0xFF16DB93) : Color(0xFFAB73D3),
+            ),
+          ),
           const SizedBox(height: 12),
           Row(children: [
             _buildOutlinedButton('A', isDarkMode),
@@ -134,7 +168,7 @@ class SettingsList extends StatelessWidget {
                   size: 20, color: isDarkMode ? Colors.yellow[200]! : Colors.orange),
                 const SizedBox(width: 8),
                 Text(isDarkMode ? 'Тёмная тема' : 'Светлая тема', 
-                  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87)),
+                  style: TextStyle(color: isDarkMode ? Color(0xFF16DB93) : Color(0xFFAB73D3))),
               ]),
               Switch(
                 value: isDarkMode,
@@ -147,14 +181,28 @@ class SettingsList extends StatelessWidget {
     );
   }
 
-  Widget _buildDescriptionSection3(bool isDarkMode, BuildContext context) {
+  Widget _buildDescriptionSection3(bool isDarkMode, Color borderColor, BuildContext context) {
     return Container(
-      color: isDarkMode ? Colors.grey[850]! : Colors.grey[50]!,
+      decoration: BoxDecoration(
+      color: isDarkMode ? Colors.grey[850] : const Color(0xFFFFEDEB),
+      border: Border(
+        bottom: BorderSide(
+          color: borderColor,
+          width: 2),
+        ),
+    ),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Description', style: TextStyle(fontSize: 14, color: isDarkMode ? Colors.grey[300]! : Colors.grey[700]!)),  // ✅ Добавьте !
+          Text(
+            'Description',
+            style: TextStyle(
+              fontSize: 14,
+              fontFamily: 'Ostrovsky',
+              color: isDarkMode ? Color(0xFF16DB93) : Color(0xFFAB73D3),
+            ),
+          ),
           const SizedBox(height: 12),
           Row(children: [
             _buildOutlinedButton('A', isDarkMode),
@@ -167,7 +215,13 @@ class SettingsList extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Switchable', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87)),
+              Text(
+                'Switchable',
+                style: TextStyle(
+                  fontFamily: 'Ostrovsky',
+                  color: isDarkMode ? Color(0xFF16DB93) : Color(0xFFAB73D3),
+                ),
+              ),
               Switch(
                 value: context.watch<SettingRepository>().switchableValue,
                 onChanged: (value) => context.read<SettingRepository>().setSwitchableValue(value),
@@ -177,7 +231,13 @@ class SettingsList extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Listable', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87)),
+              Text(
+                'Listable',
+                style: TextStyle(
+                  fontFamily: 'Ostrovsky',
+                  color: isDarkMode ? Color(0xFF16DB93) : Color(0xFFAB73D3),
+                ),
+              ),
               IconButton(
                 icon: Icon(Icons.arrow_drop_down, color: isDarkMode ? Colors.white : Colors.black87),
                 onPressed: () {},

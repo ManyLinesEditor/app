@@ -5,16 +5,16 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 class AppTheme {
   static final light = ThemeData(
     useMaterial3: true,
-    colorSchemeSeed: Colors.green,
+    colorSchemeSeed: const Color(0xFF16DB93),
     brightness: Brightness.light,
-    fontFamily: 'Roboto',
+    fontFamily: 'LT Remark',
   );
 
   static final dark = ThemeData(
     useMaterial3: true,
-    colorSchemeSeed: Colors.green,
+    colorSchemeSeed: const Color(0xFFAB73D3),
     brightness: Brightness.dark,
-    fontFamily: 'Roboto',
+    fontFamily: 'LT Remark',
   );
 }
 

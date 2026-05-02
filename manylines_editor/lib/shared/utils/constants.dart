@@ -8,7 +8,7 @@ class AppConstants {
   static const double tabOffset = 100.0;
   
   static const Color primaryColor = Colors.green;
-  static const Color accentColor = Colors.blue;
+  static const Color accentColor = Color(0xFF16DB93);
   
   static const double desktopMinWidth = 700.0;
   static const double constrainedMaxWidthRatio = 0.7;

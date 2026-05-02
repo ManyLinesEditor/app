@@ -1,5 +1,3 @@
-// lib/pages/workspace/widgets/glossary_entry_tile.dart
-
 import 'package:flutter/material.dart';
 import '../../../entities/glossary_entry/glossary_entry.dart';
 
@@ -8,9 +6,10 @@ class GlossaryEntryTile extends StatefulWidget {
   final bool isDarkMode;
   final Color textColor;
   final Color borderColor;
-  final Function(String) onUpdateDefinition;
+  final Function(String, String) onUpdateDefinition;
+  final Function(String) onToggleDefinition;
+  final Function(String, String) onDeleteDefinition;
   final VoidCallback onToggleExpand;
-  final VoidCallback onDelete;
 
   const GlossaryEntryTile({
     super.key,
@@ -19,8 +18,9 @@ class GlossaryEntryTile extends StatefulWidget {
     required this.textColor,
     required this.borderColor,
     required this.onUpdateDefinition,
+    required this.onToggleDefinition,
+    required this.onDeleteDefinition,
     required this.onToggleExpand,
-    required this.onDelete,
   });
 
   @override
@@ -28,28 +28,34 @@ class GlossaryEntryTile extends StatefulWidget {
 }
 
 class _GlossaryEntryTileState extends State<GlossaryEntryTile> {
-  late TextEditingController _definitionController;
+  final Map<String, TextEditingController> _controllers = {};
 
   @override
   void initState() {
     super.initState();
-    // ✅ Создаём контроллер с текущим определением
-    _definitionController = TextEditingController(text: widget.entry.definition);
+    for (var def in widget.entry.definitions) {
+      _controllers[def.id] = TextEditingController(text: def.text);
+    }
   }
 
   @override
   void didUpdateWidget(GlossaryEntryTile oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // ✅ Обновляем контроллер если entry изменился
-    if (oldWidget.entry.id != widget.entry.id || 
-        oldWidget.entry.definition != widget.entry.definition) {
-      _definitionController.text = widget.entry.definition;
+    // Обновляем контроллеры при изменении определений
+    for (var def in widget.entry.definitions) {
+      if (!_controllers.containsKey(def.id)) {
+        _controllers[def.id] = TextEditingController(text: def.text);
+      } else if (_controllers[def.id]!.text != def.text) {
+        _controllers[def.id]!.text = def.text;
+      }
     }
   }
 
   @override
   void dispose() {
-    _definitionController.dispose();
+    for (var controller in _controllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -57,59 +63,93 @@ class _GlossaryEntryTileState extends State<GlossaryEntryTile> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: widget.borderColor)),
+        border: Border(bottom: BorderSide(
+          color: widget.isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E),
+          width: 3),
+          ),
         color: widget.entry.isExpanded
-            ? (widget.isDarkMode ? Colors.blue[900]!.withOpacity(0.2) : Colors.blue[50])
-            : Colors.transparent,
+            ? (widget.isDarkMode ? Color(0xFFB07156) : Color(0xFFAB73D3))
+            : (widget.isDarkMode ? Color(0xFFB07156) : Color(0xFFAB73D3)),
       ),
       child: Column(
         children: [
+          // ✅ Заголовок термина
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             title: Row(
               children: [
                 Icon(
-                  widget.entry.isExpanded ? Icons.arrow_drop_down : Icons.arrow_right,
-                  size: 20,
-                  color: widget.textColor,
+                  widget.entry.isExpanded ? Icons.arrow_drop_down : Icons.arrow_drop_up,
+                  size: 30,
+                  color: Color.fromARGB(255, 255, 255, 255),
                 ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     widget.entry.term,
-                    style: const TextStyle(fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Ostrovsky',
+                      color: Color.fromARGB(255, 255, 255, 255)
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  onPressed: widget.onDelete,
-                  tooltip: 'Удалить',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
                 ),
               ],
             ),
             onTap: widget.onToggleExpand,
           ),
+          
+          // ✅ Список определений
           if (widget.entry.isExpanded)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Определение:',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: widget.isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
+            ...widget.entry.definitions.map((def) => _buildDefinitionTile(def)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDefinitionTile(GlossaryDefinition def) {
+    final isCollapsed = def.isCollapsed;  // ✅ Свернуто или нет
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: !isCollapsed 
+          ? (widget.isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : Color(0xFFFFEDEB))
+          : (widget.isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : Color(0xFFFFEDEB)),
+          border: Border(top: BorderSide(
+            color: widget.isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E),
+            width: 2,
+            ),
+          ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          GestureDetector(
+            onTap: () => widget.onToggleDefinition(def.id),
+            child: Icon(
+              isCollapsed ? Icons.radio_button_unchecked : Icons.radio_button_checked,
+              color: isCollapsed 
+                  ? (widget.isDarkMode ? Color(0xFFB07156) : Color(0xFFAB73D3))
+                  : (widget.isDarkMode ? Color(0xFFB07156) : Color(0xFFAB73D3)),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 8),
+          
+          // ✅ Определение
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (!isCollapsed) ...[
+                  // ✅ Развёрнуто: показываем TextField для редактирования
                   TextField(
-                    controller: _definitionController,
-                    maxLines: 5,
+                    controller: _controllers[def.id],
+                    maxLines: null,
                     minLines: 3,
                     style: TextStyle(color: widget.textColor),
                     decoration: InputDecoration(
@@ -120,14 +160,70 @@ class _GlossaryEntryTileState extends State<GlossaryEntryTile> {
                       ),
                       filled: true,
                       fillColor: widget.isDarkMode ? Colors.grey[800] : Colors.white,
+                      contentPadding: const EdgeInsets.all(12),
                     ),
-                    onChanged: widget.onUpdateDefinition,
+                    onChanged: (value) {
+                      widget.onUpdateDefinition(def.id, value);
+                    },
+                  ),
+                ] else ...[
+                  // ✅ Свёрнуто: показываем первую строку с многоточием
+                  GestureDetector(
+                    onTap: () => widget.onToggleDefinition(def.id),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text(
+                        _getFirstLine(def.text),
+                        style: TextStyle(
+                          color: widget.isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E),
+                          fontStyle: def.text.isEmpty ? FontStyle.italic : FontStyle.normal,
+                          fontFamily: 'Ostrovsky'
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ),
                 ],
-              ),
+                
+                // ✅ Кнопка удаления
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 18),
+                    onPressed: () {
+                      widget.onDeleteDefinition(widget.entry.id, def.id);
+                    },
+                    tooltip: 'Удалить определение',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ),
+              ],
             ),
+          ),
         ],
       ),
     );
+  }
+
+  String _getFirstLine(String text) {
+    if (text.isEmpty) return 'Lorem ipsum...';
+    final lines = text.split('\n');
+
+    String firstLine = lines.first;
+    String subtext = text;
+    if (firstLine.length > 20) {
+      firstLine = firstLine.substring(0, 20);
+      subtext = text.substring(0, 20) + '...';
+    }
+
+    final hasMoreLines = lines.length > 1 || text.length > lines.first.length;
+    if (!hasMoreLines) {
+      return subtext;
+    }
+    else {
+      return '$firstLine...';
+    }
   }
 }

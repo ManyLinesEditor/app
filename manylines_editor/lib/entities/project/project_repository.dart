@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'project.dart';
 import '../document/document.dart';
+import '../glossary_entry/glossary_entry.dart';
 
 class ProjectRepository extends ChangeNotifier {
   final List<Project> _projects = [
@@ -10,10 +11,12 @@ class ProjectRepository extends ChangeNotifier {
 
   Project? _selectedProject;
   bool _isGraphView = false;
+  bool _isGlossaryPanelOpen = false;
 
   List<Project> get projects => _projects;
   Project? get selectedProject => _selectedProject;
   bool get isGraphView => _isGraphView;
+  bool get isGlossaryPanelOpen => _isGlossaryPanelOpen;
 
   void addProject(String name) {
     _projects.add(Project(
@@ -65,10 +68,10 @@ class ProjectRepository extends ChangeNotifier {
   }
 
   void addDocumentToProject(AppDocument document) {
-  if (_selectedProject == null) return;
-  _selectedProject!.documents.add(document);
-  notifyListeners();
-}
+    if (_selectedProject == null) return;
+    _selectedProject!.documents.add(document);
+    notifyListeners();
+  }
 
   void deleteDocument(AppDocument doc) {
     if (_selectedProject == null) return;
@@ -77,7 +80,123 @@ class ProjectRepository extends ChangeNotifier {
   }
 
   void togglePin(AppDocument doc) {
-  doc.isPinned = !doc.isPinned;
-  notifyListeners();  // ✅ Уведомляем о изменении
+    doc.isPinned = !doc.isPinned;
+    notifyListeners();
+  }
+
+  void addGlossaryEntry(String term, String definition) {
+    if (_selectedProject == null) return;
+    
+    GlossaryEntry? existingEntry;
+    try {
+      existingEntry = _selectedProject!.glossary
+          .firstWhere((e) => e.term.toLowerCase() == term.toLowerCase());
+    } catch (e) {
+      existingEntry = null;
+    }
+    
+    if (existingEntry != null) {
+      final newDefinition = GlossaryDefinition(
+        id: 'def${DateTime.now().millisecondsSinceEpoch}',
+        text: definition,
+        isActive: false,
+      );
+      existingEntry.definitions.add(newDefinition);
+    } else {
+      final newEntry = GlossaryEntry(
+        id: 'g${DateTime.now().millisecondsSinceEpoch}',
+        term: term,
+        definitions: [
+          GlossaryDefinition(
+            id: 'def${DateTime.now().millisecondsSinceEpoch}',
+            text: definition,
+            isActive: true,
+          ),
+        ],
+      );
+      _selectedProject!.glossary.add(newEntry);
+    }
+    
+    notifyListeners();
+  }
+
+  void updateGlossaryDefinition(String definitionId, String newText) {
+    if (_selectedProject == null) return;
+    
+    for (var entry in _selectedProject!.glossary) {
+      GlossaryDefinition? def;
+      try {
+        def = entry.definitions.firstWhere((d) => d.id == definitionId);
+      } catch (e) {
+        continue;
+      }
+      
+      if (def != null) {
+        def.text = newText;
+        notifyListeners();
+        return;
+      }
+    }
+  }
+
+  void toggleGlossaryDefinition(String definitionId) {
+  if (_selectedProject == null) return;
+  
+  for (var entry in _selectedProject!.glossary) {
+    for (var def in entry.definitions) {
+      if (def.id == definitionId) {
+        def.isCollapsed = !def.isCollapsed;
+        notifyListeners();
+        return;
+      }
+    }
+  }
 }
+
+  void deleteGlossaryDefinition(String entryId, String definitionId) {
+    if (_selectedProject == null) return;
+    
+    GlossaryEntry? entry;
+    try {
+      entry = _selectedProject!.glossary.firstWhere((e) => e.id == entryId);
+    } catch (e) {
+      return;
+    }
+    
+    if (entry != null) {
+      entry.definitions.removeWhere((d) => d.id == definitionId);
+      if (entry.definitions.isEmpty) {
+        _selectedProject!.glossary.remove(entry);
+      }
+      notifyListeners();
+    }
+  }
+
+  void toggleGlossaryEntry(String entryId) {
+    if (_selectedProject == null) return;
+    
+    try {
+      final entry = _selectedProject!.glossary
+          .firstWhere((e) => e.id == entryId);
+      entry.isExpanded = !entry.isExpanded;
+      notifyListeners();
+    } catch (e) {
+      return;
+    }
+  }
+
+  void openGlossaryPanel() {
+    _isGlossaryPanelOpen = true;
+    notifyListeners();
+  }
+
+  void toggleGlossaryPanel() {
+    _isGlossaryPanelOpen = !_isGlossaryPanelOpen;
+    notifyListeners();
+  }
+
+  void closeGlossaryPanel() {
+    _isGlossaryPanelOpen = false;
+    notifyListeners();
+  }
 }
