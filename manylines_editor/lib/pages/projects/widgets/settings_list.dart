@@ -69,7 +69,7 @@ class SettingsList extends StatelessWidget {
             color: borderColor,
             width: 1),
           ),
-        color: context.watch<SettingRepository>().isDarkMode ? const Color(0xFF16DB93)! : Color(0xFFFFEDEB),
+        color: context.watch<SettingRepository>().isDarkMode ? const Color(0xFF16DB93) : Color(0xFFFFEDEB),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(

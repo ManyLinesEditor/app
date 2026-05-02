@@ -18,7 +18,9 @@ class CreateDocumentFeature {
         return AlertDialog(
           backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,
           title: Text('Новый документ', 
-            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87)),
+            style: TextStyle(
+              color: isDarkMode ? Colors.white : Colors.black87,
+              fontFamily: 'LT Remark')),
           content: Form(
             key: formKey,
             child: CustomTextField(
@@ -50,7 +52,7 @@ class CreateDocumentFeature {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green[700],
+                backgroundColor: Color(0xFF16DB93),
                 foregroundColor: Colors.white,
               ),
               child: const Text('Создать'),
