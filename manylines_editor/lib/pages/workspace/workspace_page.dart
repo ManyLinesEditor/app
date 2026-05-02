@@ -99,8 +99,8 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
   final isDarkMode = settingState.isDarkMode;
   final leftPanelBg = isDarkMode ? const Color(0xFF603D2E) : Colors.white;
   final headerBg = isDarkMode ? const Color(0xFF662C90) : const Color(0xFFAB73D3);
-  final textColor = isDarkMode ? Colors.white : const Color(0xFFB07156);
-  final borderColor = isDarkMode ? const Color(0xFFB07156) : const Color(0xFFAB73D3);
+  final textColor = isDarkMode ? Color.fromARGB(255, 255, 255, 255) : const Color(0xFF603D2E);
+  final borderColor = isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E);
   
   final showTwoEditors = documentState.secondSelectedDocument != null;
   final isPanelCollapsed = settingState.isSidePanelCollapsed;
@@ -120,7 +120,12 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
           curve: Curves.easeInOut,
           width: isPanelCollapsed ? 0 : (projectState.isGraphView ? 800 : 300),
           decoration: BoxDecoration(
-            border: Border(right: BorderSide(color: borderColor)),
+            border: Border(
+              right: BorderSide(
+                color: borderColor,
+                width: 1,
+              ),
+            ),
           ),
           child: isPanelCollapsed
               ? const SizedBox.shrink()
@@ -132,7 +137,12 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
           width: 24,
           decoration: BoxDecoration(
             color: (isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB)),
-            border: Border(right: BorderSide(color: borderColor)),
+            border: Border(
+              right: BorderSide(
+                color: borderColor,
+                width: 2,
+              ),
+            ),
           ),
           child: Column(
             children: [
@@ -171,7 +181,16 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
             width: 24,
             decoration: BoxDecoration(
               color: isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB),
-              border: Border(right: BorderSide(color: borderColor)),
+              border: Border(
+                right: BorderSide(
+                  color: borderColor,
+                  width: 2,
+                ),
+                left: BorderSide(
+                  color: borderColor,
+                  width:2,
+                )
+              ),
             ),
             child: Column(
               children: [
@@ -198,7 +217,16 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
             width: 24,
             decoration: BoxDecoration(
               color: isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB),
-              border: Border(right: BorderSide(color: borderColor)),
+              border: Border(
+                right: BorderSide(
+                  color: borderColor,
+                  width: 2,
+                ),
+                left: BorderSide(
+                  color: borderColor,
+                  width: 2,
+                )
+              ),
             ),
             child: Column(
               children: [
@@ -220,25 +248,54 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
           ),
       ],
     ),
+
     // ✅ FAB для создания документа
-    persistentFooterButtons: [
-      FloatingActionButton(
-        heroTag: 'createDoc',
-        onPressed: () => CreateDocumentFeature.show(context),
-        tooltip: 'Новый документ',
-        child: const Icon(Icons.add),
+    bottomNavigationBar: Container(
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB),
+        border: Border(
+          top: BorderSide(
+            color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : const Color(0xFF603D2E),
+            width: 3,
+          ),
+          right: BorderSide(
+            color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : const Color(0xFF603D2E),
+            width: 3,
+          ),
+          left: BorderSide(
+            color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : const Color(0xFF603D2E),
+            width: 3,
+          ),
+        ),
       ),
-    ],
-    // ✅ FAB для переключения список/граф
-    floatingActionButton: Selector<ProjectRepository, bool>(
-      selector: (_, state) => state.isGraphView,
-      builder: (context, isGraphView, _) {
-        return FloatingActionButton(
-          onPressed: () => projectState.toggleViewMode(),
-          tooltip: isGraphView ? 'Список' : 'Граф',
-          child: Icon(isGraphView ? Icons.list : Icons.account_tree),
-        );
-      },
+      height: 70,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: 'createDoc',
+            onPressed: () => CreateDocumentFeature.show(context),
+            tooltip: 'Новый документ',
+            backgroundColor: const Color(0xFF16DB93),
+            child: const Icon(Icons.add, color: Colors.white),
+            elevation: 4,
+          ),
+          const SizedBox(width: 12),
+          Selector<ProjectRepository, bool>(
+            selector: (_, state) => state.isGraphView,
+            builder: (context, isGraphView, _) {
+              return FloatingActionButton(
+                onPressed: () => projectState.toggleViewMode(),
+                tooltip: isGraphView ? 'Список' : 'Граф',
+                backgroundColor: const Color(0xFFAB73D3),
+                child: Icon(isGraphView ? Icons.list : Icons.account_tree, color: Colors.white),
+                elevation: 4,
+              );
+            },
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -246,13 +303,14 @@ Widget _buildDesktopLayout(BuildContext context, AppDocument? selectedDocument) 
 // ✅ _buildSingleEditorLayout
 Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocument, Color textColor, bool isDarkMode) {
   if (selectedDocument == null) {
-    return Center(
+    return Container(
+      color: isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.description_outlined, size: 64, color: Colors.grey[400]),
+          Icon(Icons.description_outlined, size: 64, color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : const Color(0xFFB07156)),
           const SizedBox(height: 16),
-          Text('Выберите документ', style: TextStyle(color: textColor)),
+          Text('Выберите документ', style: TextStyle(color: textColor, fontFamily: 'LT Remark')),
         ],
       ),
     );
@@ -262,13 +320,25 @@ Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocum
     children: [
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        color: isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB),
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB),
+          border: Border(
+            bottom: BorderSide(
+              color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : const Color(0xFF603D2E),
+              width: 2,
+            ),
+          ),
+        ),
         child: Row(
           children: [
             Expanded(
               child: Text(
                 selectedDocument.name,
-                style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: textColor,
+                  fontFamily: 'Ostrovsky',
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -282,10 +352,14 @@ Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocum
           ],
         ),
       ),
+      // ✅ Обёртка с цветом фона редактора
       Expanded(
-        child: QuillEditorWrapper(
-          document: selectedDocument,
-          editorIndex: 1,
+        child: Container(
+          color: isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : const Color(0xFFFFEDEB),
+          child: QuillEditorWrapper(
+            document: selectedDocument,
+            editorIndex: 1,
+          ),
         ),
       ),
     ],
@@ -295,6 +369,8 @@ Widget _buildSingleEditorLayout(BuildContext context, AppDocument? selectedDocum
 // ✅ _buildTwoEditorsLayout
 Widget _buildTwoEditorsLayout(BuildContext context, Color borderColor, Color textColor) {
   final documentState = context.watch<DocumentRepository>();
+  // ✅ Добавляем isDarkMode
+  final isDarkMode = context.watch<SettingRepository>().isDarkMode;
   
   return Row(
     children: [
@@ -304,7 +380,11 @@ Widget _buildTwoEditorsLayout(BuildContext context, Color borderColor, Color tex
             _buildEditorHeader(context, 1, textColor, documentState.selectedDocument),
             Expanded(
               child: Container(
-                decoration: BoxDecoration(border: Border(right: BorderSide(color: borderColor))),
+                decoration: BoxDecoration(
+                  border: Border(right: BorderSide(color: borderColor)),
+                  // ✅ Добавляем цвет фона
+                  color: isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : const Color(0xFFFFEDEB),
+                ),
                 child: documentState.selectedDocument != null
                     ? QuillEditorWrapper(
                         document: documentState.selectedDocument!,
@@ -321,12 +401,16 @@ Widget _buildTwoEditorsLayout(BuildContext context, Color borderColor, Color tex
           children: [
             _buildEditorHeader(context, 2, textColor, documentState.secondSelectedDocument),
             Expanded(
-              child: documentState.secondSelectedDocument != null
-                  ? QuillEditorWrapper(
-                      document: documentState.secondSelectedDocument!,
-                      editorIndex: 2,
-                    )
-                  : Center(child: Text('Выберите документ', style: TextStyle(color: textColor))),
+              // ✅ Обёртка с цветом фона для второго редактора
+              child: Container(
+                color: isDarkMode ? const Color.fromARGB(255, 0, 0, 0) : const Color(0xFFFFEDEB),
+                child: documentState.secondSelectedDocument != null
+                    ? QuillEditorWrapper(
+                        document: documentState.secondSelectedDocument!,
+                        editorIndex: 2,
+                      )
+                    : Center(child: Text('Выберите документ', style: TextStyle(color: textColor))),
+              ),
             ),
           ],
         ),
@@ -340,18 +424,34 @@ Widget _buildEditorHeader(BuildContext context, int index, Color textColor, AppD
   final isDarkMode = context.watch<SettingRepository>().isDarkMode;
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    color: isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB),
+    decoration: BoxDecoration(
+      color: isDarkMode ? const Color(0xFF603D2E) : const Color(0xFFFFEDEB),
+      border: Border(
+        right: BorderSide(
+          color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : const Color(0xFF603D2E),
+          width: 1,
+        ),
+        bottom: BorderSide(
+          color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : const Color(0xFF603D2E),
+          width: 2,
+        ),
+      ),
+    ),
     child: Row(
       children: [
         Expanded(
           child: Text(
             doc?.name ?? (index == 1 ? 'Первый редактор' : 'Второй редактор'),
-            style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: textColor,
+              fontFamily: 'Ostrovsky',
+              ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
         IconButton(
-          icon: const Icon(Icons.close, size: 20),
+          icon: Icon(Icons.close, size: 20, color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : const Color(0xFF603D2E),),
           onPressed: () {
             if (doc != null) {
               context.read<DocumentRepository>().closeEditorIfOpen(doc.id);

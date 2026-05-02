@@ -37,8 +37,12 @@ class GlossaryPanel extends StatelessWidget {
     return Container(
       width: 300,
       decoration: BoxDecoration(
-        border: Border(left: BorderSide(color: borderColor)),
-        color: isDarkMode ? Colors.grey[900] : Colors.grey[50],
+        border: Border(
+          left: BorderSide(
+            color: isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E),
+          ),
+        ),
+        color: isDarkMode ? Colors.grey[900] : Color(0xFFFFEDEB),
       ),
       child: Column(
         children: [

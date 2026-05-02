@@ -23,7 +23,7 @@ class SidePanel extends StatelessWidget {
     final isPanelCollapsed = settingState.isSidePanelCollapsed;
     final isGraphView = projectState.isGraphView;
     
-    final leftPanelBg = settingState.isDarkMode ? Colors.grey[900] : Color(0xFFFFEDEB);
+    final leftPanelBg = settingState.isDarkMode ? Colors.grey[900] : Color.fromARGB(255, 255, 245, 244);
     final headerBg = settingState.isDarkMode ? Color.fromARGB(255, 0, 0, 0) : Color(0xFFFFEDEB);
     final textColor = settingState.isDarkMode ? Colors.white : Colors.black87;
     final borderColor = settingState.isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E);
@@ -35,7 +35,12 @@ class SidePanel extends StatelessWidget {
       ? 0 
       : (isGraphView ? 800 : 300),
       decoration: BoxDecoration(
-        border: Border(right: BorderSide(color: borderColor)),
+        border: Border(
+          right: BorderSide(
+            color: borderColor,
+            width: 2,
+          ),
+        ),
       ),
       child: isPanelCollapsed
           ? const SizedBox.shrink()
@@ -346,7 +351,7 @@ class _DocumentsList extends StatelessWidget {
                   color: isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFFFFEDEB),
                 ),
               ),
-              subtitle: doc.parentId != null ? Text('Поддокумент', style: TextStyle(fontSize: 10, color: Colors.grey[600])) : null,
+              subtitle: doc.parentId != null ? Text('Поддокумент', style: TextStyle(fontSize: 12, color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : const Color(0xFFFFEDEB))) : null,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -514,7 +519,7 @@ class _DocumentsGraph extends StatelessWidget {
                   scaleEnabled: true,  // ✅ Включен зум
                   boundaryMargin: const EdgeInsets.all(1000),  // ✅ Большая область для прокрутки
                   child: Container(
-                    color: isDarkMode ? Colors.grey[900] : Colors.white,
+                    color: isDarkMode ? Colors.grey[900] : Color.fromARGB(255, 255, 245, 244),
                     child: Center(
                       child: Padding(
                         padding: const EdgeInsets.all(60),
