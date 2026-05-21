@@ -12,11 +12,13 @@ class ProjectRepository extends ChangeNotifier {
   Project? _selectedProject;
   bool _isGraphView = false;
   bool _isGlossaryPanelOpen = false;
+  String? _highlightedGlossaryTermId;
 
   List<Project> get projects => _projects;
   Project? get selectedProject => _selectedProject;
   bool get isGraphView => _isGraphView;
   bool get isGlossaryPanelOpen => _isGlossaryPanelOpen;
+  String? get highlightedGlossaryTermId => _highlightedGlossaryTermId;
 
   void addProject(String name) {
     _projects.add(Project(
@@ -198,5 +200,17 @@ class ProjectRepository extends ChangeNotifier {
   void closeGlossaryPanel() {
     _isGlossaryPanelOpen = false;
     notifyListeners();
+  }
+
+  void highlightGlossaryTerm(String termId) {
+    _highlightedGlossaryTermId = termId;
+    notifyListeners();
+    
+    Future.delayed(const Duration(seconds: 3), () {
+      if (_highlightedGlossaryTermId == termId) {
+        _highlightedGlossaryTermId = null;
+        notifyListeners();
+      }
+    });
   }
 }

@@ -10,6 +10,7 @@ import '../../../features/document/delete_document.dart';
 import '../../../features/document/toggle_pin.dart';
 import '../../../features/document/indent_document.dart';
 import '../../../features/document/outdent_document.dart';
+import '../../../features/document/export_document.dart';
 
 
 class SidePanel extends StatelessWidget {
@@ -25,7 +26,6 @@ class SidePanel extends StatelessWidget {
     
     final leftPanelBg = settingState.isDarkMode ? Colors.grey[900] : Color.fromARGB(255, 255, 245, 244);
     final headerBg = settingState.isDarkMode ? Color.fromARGB(255, 0, 0, 0) : Color(0xFFFFEDEB);
-    final textColor = settingState.isDarkMode ? Colors.white : Colors.black87;
     final borderColor = settingState.isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color(0xFF603D2E);
 
     return AnimatedContainer(
@@ -211,6 +211,15 @@ class _DocumentsList extends StatelessWidget {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        IconButton(
+                          icon: Icon(Icons.file_download, size: 20, color: isDarkMode ? Colors.white : const Color(0xFFFFEDEB),),
+                          onPressed: () => ExportDocumentFeature.show(context, doc),
+                          tooltip: 'Экспорт',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                        const SizedBox(width: 4),
+
                         GestureDetector(
                           onTap: () {},
                           child: Checkbox(
@@ -401,6 +410,15 @@ class _DocumentsList extends StatelessWidget {
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  IconButton(
+                    icon: Icon(Icons.file_download, size: 20, color: isDarkMode ? Colors.white : const Color(0xFFFFEDEB),),
+                    onPressed: () => ExportDocumentFeature.show(context, doc),
+                    tooltip: 'Экспорт',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(width: 4),
+
                   GestureDetector(
                     onTap: () {},
                     child: Checkbox(
@@ -503,6 +521,15 @@ class _DocumentsGraph extends StatelessWidget {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        IconButton(
+                          icon: Icon(Icons.file_download, size: 20, color: isDarkMode ? Colors.white : const Color(0xFFFFEDEB),),
+                          onPressed: () => ExportDocumentFeature.show(context, doc),
+                          tooltip: 'Экспорт',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                        const SizedBox(width: 4),
+
                         GestureDetector(
                           onTap: () {},
                           child: Checkbox(
@@ -598,7 +625,7 @@ class _DocumentsGraph extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.purple.withOpacity(0.4),
+            color: Colors.purple,
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -710,7 +737,7 @@ class _DocumentsGraph extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black,
               blurRadius: 6,
               offset: const Offset(0, 3),
             ),
